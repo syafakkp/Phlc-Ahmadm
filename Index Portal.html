@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --navy:#002d5d; --sidebar-bg:#0f172a; --gold:#c5a059; --text-gray:#94a3b8; }
+    body { background:#f8fafc; font-family:'Inter',sans-serif; margin:0; overflow-x:hidden; }
+    /* Cegah drag & select pada elemen konten */
+    #player-wrapper { user-select:none; -webkit-user-select:none; }
+    #player-wrapper iframe { pointer-events:auto; }
+
+    /* ── Sidebar ── */
+    .sidebar { width:280px; background:var(--sidebar-bg); color:white; position:fixed; height:100vh; z-index:1050; transition:.3s; overflow-y:auto; display:flex; flex-direction:column; }
+    #side-nav { flex:1; overflow-y:auto; padding-bottom:8px; }
+    .nav-item-custom { padding:12px 20px; display:flex; align-items:center; color:var(--text-gray); cursor:pointer; border-left:4px solid transparent; transition:.2s; text-decoration:none; }
+    .nav-item-custom:hover,.nav-item-custom.active { background:#1e293b; color:white; border-left-color:var(--gold); }
+    .nav-item-custom i { width:25px; margin-right:12px; }
+    .sidebar-section-label { padding:14px 20px 4px; font-size:9.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#334155; }
+
+    /* CBT */
+    .nav-item-cbt { padding:12px 20px; display:flex; align-items:center; cursor:pointer; border-left:4px solid transparent; transition:.2s; color:var(--gold); font-weight:600; font-size:13.5px; background:rgba(197,160,89,.06); }
+    .nav-item-cbt i { width:25px; margin-right:12px; }
+    .nav-item-cbt:hover { background:rgba(197,160,89,.15); border-left-color:var(--gold); color:#dfc080; }
+    .nav-item-cbt.active { background:rgba(197,160,89,.18); border-left-color:var(--gold); color:white; }
+    .nav-item-cbt .badge-cbt { margin-left:auto; background:var(--gold); color:#002d5d; font-size:9px; font-weight:800; padding:2px 7px; border-radius:10px; }
+
+    /* Statistik — tersedia untuk semua */
+    .nav-item-stat { padding:12px 20px; display:flex; align-items:center; cursor:pointer; border-left:4px solid transparent; transition:.2s; color:#38bdf8; font-weight:600; font-size:13px; background:rgba(56,189,248,.05); }
+    .nav-item-stat i { width:25px; margin-right:12px; }
+    .nav-item-stat:hover { background:rgba(56,189,248,.12); border-left-color:#38bdf8; }
+    .nav-item-stat.active { background:rgba(56,189,248,.18); border-left-color:#38bdf8; color:white; }
+
+    /* ── Layout ── */
+    .main-content { margin-left:280px; width:calc(100% - 280px); transition:.3s; min-height:100vh; }
+    .hero-header { background:white; padding:40px; border-bottom:8px solid var(--navy); display:flex; justify-content:space-between; align-items:center; }
+    .img-profile { width:220px; height:220px; object-fit:cover; border-radius:15px; border:5px solid white; box-shadow:10px 10px 0 var(--navy); }
+    .card-item { background:white; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,.05); position:relative; border-left:5px solid var(--gold); height:100%; transition:.3s; }
+    .card-item:hover { transform:translateY(-5px); }
+    .sidebar-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:1040; }
+
+    @media (max-width:991.98px) {
+      .sidebar { left:-280px; }
+      .sidebar.active { left:0; }
+      .sidebar-overlay.active { display:block; }
+      .main-content { margin-left:0; width:100%; }
+      .hero-header { flex-direction:column-reverse; text-align:center; padding:20px; gap:20px; }
+      .img-profile { width:120px; height:120px; }
+    }
+
+    /* ── Player ── */
+    #player-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:none; flex-direction:column; }
+    #player-overlay.active { display:flex; }
+    .player-toolbar { height:48px; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center; padding:0 15px; flex-shrink:0; }
+    .admin-controls { position:absolute; top:10px; right:10px; display:flex; gap:5px; }
+    .btn-admin { padding:2px 8px; font-size:.7rem; }
+
+    /* ── Pelindung Download ── */
+    #player-frame { width:100%; flex:1; border:none; display:block; min-height:0; }
+
+    /* Blocker kecil di pojok kanan atas — hanya menutupi tombol open-in-new-tab Google
+       Menggunakan position:absolute agar tetap aktif saat overlay fullscreen */
+    #blocker-tr {
+      position: absolute;
+      top: 48px;   /* di bawah toolbar kita */
+      right: 0;
+      width: 52px;
+      height: 52px;
+      background: #1a1a1a; /* sesuaikan dengan warna toolbar player */
+      z-index: 10000;
+      cursor: default;
+      pointer-events: all;
+    }
+
+    /* ══════════════════════════════════
+       PANEL STATISTIK
+    ══════════════════════════════════ */
+    #stats-panel { padding:24px 32px; }
+
+    .stat-card { border-radius:16px; padding:24px 20px; color:white; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 24px rgba(0,0,0,.12); transition:transform .2s; }
+    .stat-card:hover { transform:translateY(-4px); }
+    .stat-card .stat-num  { font-size:2.8rem; font-weight:800; line-height:1; }
+    .stat-card .stat-lbl  { font-size:.78rem; opacity:.85; margin-top:4px; font-weight:500; letter-spacing:.5px; }
+    .stat-card .stat-icon { font-size:3.2rem; opacity:.25; }
+    .sc-blue   { background:linear-gradient(135deg,#0ea5e9,#0284c7); }
+    .sc-green  { background:linear-gradient(135deg,#10b981,#059669); }
+    .sc-orange { background:linear-gradient(135deg,#f59e0b,#d97706); }
+    .sc-purple { background:linear-gradient(135deg,#8b5cf6,#7c3aed); }
+
+    .periode-pill { border-radius:30px; padding:6px 18px; border:1.5px solid #cbd5e1; font-size:.82rem; font-weight:600; cursor:pointer; transition:.2s; background:white; color:#475569; }
+    .periode-pill.active { background:#0ea5e9; border-color:#0ea5e9; color:white; }
+    .periode-pill:hover:not(.active) { border-color:#94a3b8; background:#f1f5f9; }
+
+    .stats-card { background:white; border-radius:16px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+    .stats-card-title { font-size:.9rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+
+    .rank-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+    .rank-item:last-child { border-bottom:none; }
+    .rank-badge { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; flex-shrink:0; }
+    .rank-1 { background:#fef3c7; color:#d97706; }
+    .rank-2 { background:#e0f2fe; color:#0284c7; }
+    .rank-3 { background:#f0fdf4; color:#059669; }
+    .rank-n { background:#f1f5f9; color:#64748b; }
+    .rank-bar-wrap { flex:1; height:6px; background:#f1f5f9; border-radius:4px; overflow:hidden; }
+    .rank-bar { height:100%; border-radius:4px; background:linear-gradient(90deg,#0ea5e9,#38bdf8); }
+
+    .visit-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    .visit-table th { color:#94a3b8; font-weight:700; font-size:.72rem; letter-spacing:.8px; text-transform:uppercase; padding:8px 10px; border-bottom:1.5px solid #f1f5f9; }
+    .visit-table td { padding:10px 10px; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .role-badge { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:10px; }
+    .role-admin { background:#fce7f3; color:#be185d; }
+    .role-user  { background:#e0f2fe; color:#0369a1; }
+
+    .btn-refresh { border:1.5px solid #0ea5e9; color:#0ea5e9; border-radius:8px; padding:5px 14px; font-size:.8rem; font-weight:600; cursor:pointer; background:white; transition:.2s; display:flex; align-items:center; gap:6px; }
+    .btn-refresh:hover { background:#0ea5e9; color:white; }
+    .btn-refresh.spinning i { animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .date-input { border:1.5px solid #e2e8f0; border-radius:8px; padding:6px 12px; font-size:.82rem; color:#334155; }
+    .btn-terapkan { background:#0ea5e9; color:white; border:none; border-radius:8px; padding:6px 16px; font-size:.82rem; font-weight:600; cursor:pointer; }
+    .btn-terapkan:hover { background:#0284c7; }
+
+    .skel { background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%; animation:skel .9s infinite; border-radius:8px; }
+    @keyframes skel { to { background-position:-200% 0; } }
+
+    /* Badge publik di header statistik */
+    .badge-publik { font-size:.7rem; font-weight:700; padding:3px 10px; border-radius:12px; background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
+        /* ── FOOTER ── */
+    #app-footer {
+      margin-left: var(--sidebar-w);
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    #app-footer strong {
+      color: var(--primary-dark);
+    }
+
+    @media (max-width: 767.98px) {
+      #app-footer {
+        margin-left: 0;
+        font-size: 0.7rem;
+        padding: 0.65rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<div class="sidebar">
+  <div style="padding:16px 14px 6px;border-bottom:1px solid #0f1f3a;text-align:center;">
+    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:4px;">
+      <img id="sb-ft"
+           src="https://lh3.googleusercontent.com/d/14apR9Y_nw8AihWORMBzi02EMb15bftt4"
+           style="width:60px;height:60px;object-fit:contain;"
+           alt="FETP Indonesia"
+           onerror="this.style.display='none'"/>
+    </div>
+    <p style="font-size:.67rem;color:#10b981;line-height:1.5;">
+      <strong style="color:#10b981;">FETP Indonesia</strong><br>
+      Field Epidemiology Training Program Indonesia
+    </p>
+  </div>
+
+  <div class="p-2 border-bottom border-secondary mb-2">
+    <h5 class="fw-bold text-warning m-0">Dashboard</h5>
+    <small style="color:#10b981;">Portal Akademik</small>
+  </div>
+
+  <div id="side-nav">
+    <div class="sidebar-section-label">Menu Utama</div>
+    <div class="nav-item-custom active" id="btn-home" onclick="openHome()">
+      <i class="fas fa-home"></i> Beranda
+    </div>
+
+    <!-- Menu dinamis folder Google Drive -->
+    <div id="dynamic-menu"></div>
+
+    <!-- CBT -->
+    <div class="sidebar-section-label" style="margin-top:8px">Ujian Online</div>
+    <div class="nav-item-cbt" id="btn-cbt" onclick="openCBT()">
+      <i class="fas fa-laptop-code"></i>
+      Computer Based Test
+      <span class="badge-cbt">↗ CBT</span>
+    </div>
+
+    <!-- Statistik — TERBUKA UNTUK SEMUA PENGGUNA -->
+    <div class="sidebar-section-label" style="margin-top:8px">Analitik</div>
+    <div class="nav-item-stat" id="btn-stat" onclick="openStats()">
+      <i class="fas fa-chart-bar"></i> Statistik Kunjungan
+    </div>
+  </div>
+
+  <!-- Login Admin -->
+  <div style="padding:12px 16px;border-top:1px solid #1e293b;flex-shrink:0;">
+    <button class="btn btn-outline-light btn-sm w-100" id="login-btn" onclick="loginModal.show()">
+      <i class="fas fa-lock me-1"></i> LOGIN ADMIN
+    </button>
+    <div id="admin-badge" style="display:none;text-align:center;margin-top:8px">
+      <span style="font-size:10px;color:#10b981;font-weight:600;">
+        <i class="fas fa-shield-alt"></i> Mode Admin Aktif
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN CONTENT ══════════ -->
+<div class="main-content">
+
+  <!-- Navbar mobile -->
+  <nav class="navbar navbar-dark bg-dark d-lg-none px-3 sticky-top">
+    <button class="navbar-toggler border-0" type="button" onclick="toggleSidebar()">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <span class="navbar-brand mb-0 h1" style="font-size:1rem;">Portal Akademik</span>
+  </nav>
+
+  <!-- Hero Header -->
+  <div class="hero-header" id="hero-header">
+    <div>
+      <h5 style="color:var(--gold);letter-spacing:4px">WELCOME TO</h5>
+      <h1 class="fw-800" style="font-size:3.5rem;line-height:.9;color:var(--navy)">
+        Public Health Learning Center<br>
+        <span class="fw-bold" style="font-size:1.5rem;">Field Epidemiology Training Program Indonesia</span>
+      </h1>
+      <div class="mt-1">
+        <p class="text-muted">Empowering critical and impactful epidemiologists<br>Learn • Analyze • Prevent</p>
+        <h4 class="fw-bold m-0">Ahmad Musyafa, SKM, MPH</h4>
+        <p class="text-muted">Epidemiolog Kesehatan Ahli Madya • +6281253957679</p>
+      </div>
+    </div>
+    <img src="https://lh3.googleusercontent.com/d/1w1MuacRwJCCjOCGkkKVgNk4cwL5SkLQG"
+         class="img-profile"
+         onerror="this.src='https://via.placeholder.com/160'">
+  </div>
+
+  <!-- ════ PANEL KONTEN (Folder/File) ════ -->
+  <div id="normal-panel" class="p-3 p-md-5" style="display:block;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <button id="btn-back" class="btn btn-outline-dark btn-sm rounded-pill px-3" style="display:none;" onclick="goBack()">
+          <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <h3 id="page-title" class="fw-bold m-0" style="font-size:1.25rem;">Katalog Perkuliahan</h3>
+      </div>
+      <div id="admin-toolbar" class="d-none d-flex gap-2">
+        <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="promptNewFolder()">+ FOLDER</button>
+        <button class="btn btn-primary btn-sm fw-bold shadow-sm" onclick="document.getElementById('file-input').click()">+ UPLOAD</button>
+        <input type="file" id="file-input" class="d-none" onchange="handleFileUpload(this)">
+      </div>
+    </div>
+    <div id="content-grid" class="row g-3 g-md-4"></div>
+  </div>
+
+  <!-- ════ PANEL STATISTIK — TERBUKA UNTUK SEMUA ════ -->
+  <div id="stats-panel" style="display:none;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h4 class="fw-bold m-0" style="color:#0f172a;">Statistik Kunjungan</h4>
+          <span class="badge-publik"><i class="fas fa-globe-asia me-1"></i>Publik</span>
+        </div>
+        <small class="text-muted">Rekap kunjungan pengguna</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn-refresh" id="btn-refresh-stats" onclick="loadStats()">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <span style="font-size:.8rem;color:#64748b;background:#f1f5f9;padding:5px 12px;border-radius:8px;">
+          <i class="fas fa-calendar-alt me-1" style="color:#0ea5e9;"></i>
+          <span id="stat-today-label">—</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-card sc-blue">
+          <div><div class="stat-num" id="sc-hari">—</div><div class="stat-lbl">Kunjungan Hari Ini</div></div>
+          <i class="fas fa-calendar-day stat-icon"></i>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card sc-green">
+          <div><div class="stat-num" id="sc-total">—</div><div class="stat-lbl">Total Kunjungan</div></div>
+          <i class="fas fa-users stat-icon"></i>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card sc-orange">
+          <div><div class="stat-num" id="sc-kegiatan">—</div><div class="stat-lbl">Total Kegiatan</div></div>
+          <i class="fas fa-clipboard-list stat-icon"></i>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card sc-purple">
+          <div><div class="stat-num" id="sc-halaman">—</div><div class="stat-lbl">Halaman Dikunjungi</div></div>
+          <i class="fas fa-chart-line stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Periode -->
+    <div class="stats-card mb-4">
+      <div class="stats-card-title"><i class="fas fa-filter" style="color:#0ea5e9;"></i> Periode</div>
+      <div class="d-flex gap-2 flex-wrap mb-3">
+        <button class="periode-pill" onclick="setPeriode('harian',this)">Harian</button>
+        <button class="periode-pill" onclick="setPeriode('mingguan',this)">Mingguan</button>
+        <button class="periode-pill active" onclick="setPeriode('bulanan',this)">Bulanan</button>
+        <button class="periode-pill" onclick="setPeriode('tahunan',this)">Tahunan</button>
+        <button class="periode-pill" onclick="setPeriode('khusus',this)">Periode Khusus</button>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap" id="custom-date-row" style="display:none !important;">
+        <input type="date" id="date-start" class="date-input">
+        <span style="color:#94a3b8;">s/d</span>
+        <input type="date" id="date-end" class="date-input">
+        <button class="btn-terapkan" onclick="loadStats()">Terapkan</button>
+      </div>
+    </div>
+
+    <!-- Grafik -->
+    <div class="stats-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="stats-card-title m-0"><i class="fas fa-chart-bar" style="color:#0ea5e9;"></i> Grafik Kunjungan</div>
+        <button class="btn-refresh" onclick="loadStats()"><i class="fas fa-sync-alt"></i> Refresh</button>
+      </div>
+      <div style="position:relative;height:260px;">
+        <canvas id="grafik-kunjungan"></canvas>
+      </div>
+    </div>
+
+    <!-- Halaman Populer + Kunjungan Terakhir -->
+    <div class="row g-3">
+      <div class="col-12 col-md-5">
+        <div class="stats-card h-100">
+          <div class="stats-card-title"><i class="fas fa-trophy" style="color:#f59e0b;"></i> Halaman Paling Banyak Dikunjungi</div>
+          <div id="halaman-top-list">
+            <div class="skel" style="height:44px;margin-bottom:8px;"></div>
+            <div class="skel" style="height:44px;margin-bottom:8px;"></div>
+            <div class="skel" style="height:44px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-7">
+        <div class="stats-card h-100">
+          <div class="stats-card-title"><i class="fas fa-clock" style="color:#8b5cf6;"></i> 10 Kunjungan Terakhir</div>
+          <div style="overflow-x:auto;">
+            <table class="visit-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Waktu</th>
+                  <th>Halaman</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody id="visit-tbody">
+                <tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /stats-panel -->
+
+</div><!-- /main-content -->
+
+<!-- Player overlay -->
+<div id="player-overlay">
+  <div class="player-toolbar">
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger btn-sm px-3 fw-bold shadow" onclick="closePlayer()">
+        <i class="fas fa-times"></i> TUTUP
+      </button>
+      <button class="btn btn-primary btn-sm px-3 fw-bold shadow" onclick="toggleFullScreen()">
+        <i class="fas fa-expand"></i> FULLSCREEN
+      </button>
+    </div>
+    <span class="text-white small d-none d-md-inline">Pratinjau Materi: Ahmad Musyafa', SKM, MPH</span>
+  </div>
+
+  <!-- Iframe player -->
+  <iframe id="player-frame"
+          src=""
+          allow="autoplay; fullscreen; presentation"
+          allowfullscreen></iframe>
+
+  <!-- Blocker kecil — hanya menutupi tombol open-in-new-tab Google (pojok kanan atas) -->
+  <div id="blocker-tr"></div>
+</div>
+
+<!-- Modal Login Admin -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content p-4 border-0 shadow-lg">
+      <h5 class="text-center fw-bold mb-3">Login Admin</h5>
+      <input type="text"     id="user" class="form-control mb-2" placeholder="Username">
+      <input type="password" id="pass" class="form-control mb-4" placeholder="Password">
+      <button class="btn btn-dark w-100 py-2 fw-bold" onclick="doLogin()">MASUK</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ══════════════════════════════════════════════
+//  KONFIGURASI
+// ══════════════════════════════════════════════
+const CBT_URL = 'https://script.google.com/macros/s/AKfycby4I0CXbQ4idFPOjSs_ZISp4DBFzeCKG3thzY8ZrQEf0CWzBPN9385xD_289xXevm0V/exec';
+const MAIN_ID = '1QypRuHDKCKBdygpNvw6iubvrVaS4uQBu';
+
+// ── State ─────────────────────────────────────
+let isAdmin = false;
+let currentId = MAIN_ID;
+let navigationHistory = [];
+let loginModal;
+let grafikChart = null;
+let periodeAktif = 'bulanan';
+
+// ══════════════════════════════════════════════
+//  INISIALISASI
+// ══════════════════════════════════════════════
+window.onload = function() {
+  loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+  loadSidebar();
+  openHome();
+
+  // Label tanggal hari ini
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('stat-today-label').textContent =
+    new Date().toLocaleDateString('id-ID', opts);
+
+  // Default date inputs
+  const today = toDateStr(new Date());
+  document.getElementById('date-end').value   = today;
+  document.getElementById('date-start').value = toDateStr(new Date(Date.now() - 6 * 864e5));
+};
+
+// ══════════════════════════════════════════════
+//  PANEL SWITCHING
+// ══════════════════════════════════════════════
+function showPanel(panel) {
+  document.getElementById('normal-panel').style.display = (panel === 'normal') ? 'block' : 'none';
+  document.getElementById('stats-panel').style.display  = (panel === 'stats')  ? 'block' : 'none';
+  document.getElementById('hero-header').style.display  = (panel === 'normal') ? 'flex'  : 'none';
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGASI SIDEBAR
+// ══════════════════════════════════════════════
+function clearActiveNav() {
+  document.querySelectorAll('.nav-item-custom,.nav-item-stat,.nav-item-cbt')
+    .forEach(function(el) { el.classList.remove('active'); });
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('active');
+  document.querySelector('.sidebar-overlay').classList.toggle('active');
+}
+
+function loadSidebar() {
+  google.script.run.withSuccessHandler(function(data) {
+    
+    // ✅ Urutkan abjad & angka A–Z, 1–9
+    data.sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true }));
+
+    const menu = document.getElementById('dynamic-menu');
+    menu.innerHTML = data.map(function(c) {
+      return '<div class="nav-item-custom" onclick="selectMenu(this,\'' + c.id + '\',\'' + c.name + '\')">'
+           + '<i class="fas fa-folder"></i> ' + c.name + '</div>';
+    }).join('');
+  }).getCategories(isAdmin);
+}
+
+function selectMenu(el, id, name) {
+  clearActiveNav();
+  el.classList.add('active');
+  if (window.innerWidth < 992) toggleSidebar();
+  openFolder(id, name);
+}
+
+function openHome() {
+  navigationHistory = [];
+  clearActiveNav();
+  document.getElementById('btn-home').classList.add('active');
+  openFolder(MAIN_ID, 'Beranda', true);
+}
+
+function openCBT() {
+  window.open(CBT_URL, '_blank', 'noopener,noreferrer');
+  if (window.innerWidth < 992) toggleSidebar();
+}
+
+// ── Buka Statistik — tersedia untuk semua ────
+function openStats() {
+  clearActiveNav();
+  document.getElementById('btn-stat').classList.add('active');
+  showPanel('stats');
+  if (window.innerWidth < 992) toggleSidebar();
+  setTimeout(loadStats, 60);
+}
+
+function goBack() {
+  if (navigationHistory.length > 0) {
+    const prev = navigationHistory.pop();
+    openFolder(prev.id, prev.name, true);
+  } else {
+    openHome();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  FOLDER / FILE
+// ══════════════════════════════════════════════
+function openFolder(id, name, isHome) {
+  showPanel('normal');
+  if (!isHome && id !== currentId) {
+    navigationHistory.push({ id: currentId, name: document.getElementById('page-title').innerText });
+  }
+  currentId = id;
+  document.getElementById('page-title').innerText = name;
+  document.getElementById('btn-back').style.display = (id === MAIN_ID) ? 'none' : 'block';
+  document.getElementById('admin-toolbar').classList.toggle('d-none', !isAdmin);
+
+  google.script.run.catatKunjungan(
+    name,
+    isAdmin ? 'Ahmad Musyafa' : 'Anonim',
+    isAdmin ? 'syafakkpsmd@gmail.com' : '',
+    isAdmin ? 'Admin' : 'User'
+  );
+
+  const grid = document.getElementById('content-grid');
+  grid.innerHTML = '<div class="col-12 text-center p-5"><div class="spinner-border text-primary"></div></div>';
+
+  google.script.run.withSuccessHandler(function(data) {
+    grid.innerHTML = '';
+    if (!data) { grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Tidak ada konten.</div>'; return; }
+
+    // ✅ HANYA INI YANG DITAMBAHKAN
+    data.subFolders.sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true }));
+    data.files.sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true }));
+
+    // Sub-folder
+    data.subFolders.forEach(function(sf) {
+      const hiddenStyle = sf.isHidden ? 'opacity:.6;background-color:#f1f5f9;' : '';
+      const eyeIcon     = sf.isHidden ? 'fa-eye-slash' : 'fa-eye';
+      grid.innerHTML += '<div class="col-12 col-md-4">'
+        + '<div class="card-item position-relative" style="' + hiddenStyle + '">'
+        + '<div onclick="openFolder(\'' + sf.id + '\',\'' + sf.name + '\')" style="cursor:pointer">'
+        + '<i class="fas fa-folder fa-2x text-warning mb-2"></i>'
+        + '<h6 class="fw-bold mb-0">' + sf.name + '</h6>'
+        + (sf.isHidden ? '<span class="badge bg-secondary mt-2"><i class="fas fa-eye-slash"></i> Tersembunyi</span>' : '')
+        + '</div>'
+        + (isAdmin ? '<div class="admin-controls">'
+          + '<button class="btn btn-outline-secondary btn-admin" onclick="toggleVisibility(\'' + sf.id + '\',\'folder\',' + sf.isHidden + ')"><i class="fas ' + eyeIcon + '"></i></button>'
+          + '<button class="btn btn-outline-dark btn-admin" onclick="promptRename(\'' + sf.id + '\',\'folder\',\'' + sf.name + '\')"><i class="fas fa-edit"></i></button>'
+          + '<button class="btn btn-outline-danger btn-admin" onclick="confirmDelete(\'' + sf.id + '\',\'folder\')"><i class="fas fa-trash"></i></button>'
+          + '</div>' : '')
+        + '</div></div>';
+    });
+
+    // File
+    data.files.forEach(function(f) {
+      const hiddenStyle = f.isHidden ? 'opacity:.6;background-color:#f1f5f9;' : '';
+      const eyeIcon     = f.isHidden ? 'fa-eye-slash' : 'fa-eye';
+      const iconClass   = f.isPDF ? 'fa-file-pdf text-danger' : 'fa-file-powerpoint text-warning';
+      grid.innerHTML += '<div class="col-12 col-md-4">'
+        + '<div class="card-item position-relative" style="' + hiddenStyle + '">'
+        + '<i class="fas ' + iconClass + ' fa-2x mb-2"></i>'
+        + '<h6 class="fw-bold text-truncate">' + f.name + '</h6>'
+        + (f.isHidden ? '<span class="badge bg-secondary mb-2"><i class="fas fa-eye-slash"></i> Tersembunyi</span><br>' : '')
+        + '<div class="d-grid gap-2 mt-2">'
+        + '<button class="btn btn-sm btn-dark" onclick="play(\'' + f.embedUrl + '\')">LIHAT</button>'
+        + (isAdmin && f.downloadUrl ? '<a href="' + f.downloadUrl + '" class="btn btn-sm btn-outline-danger">UNDUH PDF</a>' : '')
+        + '</div>'
+        + (isAdmin ? '<div class="admin-controls">'
+          + '<button class="btn btn-outline-secondary btn-admin" onclick="toggleVisibility(\'' + f.id + '\',\'file\',' + f.isHidden + ')"><i class="fas ' + eyeIcon + '"></i></button>'
+          + '<button class="btn btn-outline-dark btn-admin" onclick="promptRename(\'' + f.id + '\',\'file\',\'' + f.name + '\')"><i class="fas fa-edit"></i></button>'
+          + '<button class="btn btn-outline-danger btn-admin" onclick="confirmDelete(\'' + f.id + '\',\'file\')"><i class="fas fa-trash"></i></button>'
+          + '</div>' : '')
+        + '</div></div>';
+    });
+
+    if (data.subFolders.length === 0 && data.files.length === 0) {
+      grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-folder-open fa-2x mb-2 d-block"></i>Folder ini masih kosong.</div>';
+    }
+  }).getFolderContent(id, isAdmin);
+}
+
+// ══════════════════════════════════════════════
+//  STATISTIK KUNJUNGAN (TERBUKA UNTUK SEMUA)
+// ══════════════════════════════════════════════
+function setPeriode(p, el) {
+  periodeAktif = p;
+  document.querySelectorAll('.periode-pill').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+  const row = document.getElementById('custom-date-row');
+  row.style.setProperty('display', p === 'khusus' ? 'flex' : 'none', 'important');
+  if (p !== 'khusus') loadStats();
+}
+
+function getRentang() {
+  const today = new Date();
+  const fmt   = function(d) { return toDateStr(d); };
+  if (periodeAktif === 'harian')   return { s: fmt(today), e: fmt(today), mode: 'harian' };
+  if (periodeAktif === 'mingguan') return { s: fmt(new Date(Date.now() - 6 * 864e5)), e: fmt(today), mode: 'mingguan' };
+  if (periodeAktif === 'bulanan')  return { s: fmt(new Date(today.getFullYear(), today.getMonth(), 1)), e: fmt(today), mode: 'bulanan' };
+  if (periodeAktif === 'tahunan')  return { s: '2000-01-01', e: fmt(today), mode: 'tahunan' };
+  return {
+    s: document.getElementById('date-start').value || fmt(new Date(Date.now() - 6 * 864e5)),
+    e: document.getElementById('date-end').value   || fmt(today),
+    mode: 'khusus'
+  };
+}
+
+function toDateStr(d) {
+  // Pakai komponen lokal (bukan UTC) agar tidak timezone shift di browser WIB
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+function loadStats() {
+  const btn = document.getElementById('btn-refresh-stats');
+  if (btn) btn.classList.add('spinning');
+
+  ['sc-hari','sc-total','sc-kegiatan','sc-halaman'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '…';
+  });
+
+  const rentang = getRentang();
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      if (btn) btn.classList.remove('spinning');
+      if (!data) { tampilErrorStats('Data kosong dikembalikan server.'); return; }
+      renderStats(data, rentang);
+    })
+    .withFailureHandler(function(err) {
+      if (btn) btn.classList.remove('spinning');
+      tampilErrorStats('Error: ' + (err.message || JSON.stringify(err)));
+    })
+    .getStatistik(rentang.s, rentang.e, rentang.mode || '');
+}
+
+function tampilErrorStats(msg) {
+  ['sc-hari','sc-total','sc-kegiatan','sc-halaman'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '!';
+  });
+  const tbody = document.getElementById('visit-tbody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">'
+    + '<i class="fas fa-exclamation-triangle me-2"></i>' + msg + '</td></tr>';
+  const topList = document.getElementById('halaman-top-list');
+  if (topList) topList.innerHTML = '<p class="text-danger small p-2">'
+    + '<i class="fas fa-exclamation-triangle me-1"></i>' + msg + '</p>';
+}
+
+function renderStats(data, rentang) {
+  // Stat cards
+  document.getElementById('sc-hari').textContent     = data.hariIni       || 0;
+  document.getElementById('sc-total').textContent    = data.totalPeriode  || 0;
+  document.getElementById('sc-kegiatan').textContent = data.totalKegiatan || 0;
+  document.getElementById('sc-halaman').textContent  = data.halamanTop ? data.halamanTop.length : 0;
+
+  // Grafik
+  const labels = [];
+  const values = [];
+  const grafik  = data.grafik || {};
+  const mode    = rentang.mode || '';
+
+  if (mode === 'harian') {
+    // Per jam 00:00 - 23:00
+    for (let h = 0; h < 24; h++) {
+      const key = String(h).padStart(2, '0');
+      labels.push(key + ':00');
+      values.push(grafik[key] || 0);
+    }
+  } else if (mode === 'tahunan') {
+    // Per tahun: cari rentang tahun dari data grafik + tahun sekarang
+    const tahunSekarang = new Date().getFullYear();
+    const tahunList = Object.keys(grafik).map(Number).filter(Boolean);
+    const tahunMin  = tahunList.length > 0 ? Math.min.apply(null, tahunList) : tahunSekarang;
+    const tahunMax  = tahunSekarang; // sampai tahun ini
+    for (let y = tahunMin; y <= tahunMax; y++) {
+      labels.push(String(y));
+      values.push(grafik[String(y)] || 0);
+    }
+    // Jika tidak ada data sama sekali, tetap tampilkan tahun sekarang
+    if (labels.length === 0) {
+      labels.push(String(tahunSekarang));
+      values.push(0);
+    }
+  } else {
+    // Per hari: iterasi dari start sampai end pakai komponen lokal (tanpa T00:00:00 UTC issue)
+    const parts = rentang.s.split('-');
+    let cur = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const ep = rentang.e.split('-');
+    const endD = new Date(parseInt(ep[0]), parseInt(ep[1]) - 1, parseInt(ep[2]));
+    while (cur <= endD) {
+      const key = toDateStr(cur);
+      labels.push(formatTglLabel(key));
+      values.push(grafik[key] || 0);
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+
+  if (grafikChart) grafikChart.destroy();
+  const ctx = document.getElementById('grafik-kunjungan').getContext('2d');
+  grafikChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Kunjungan',
+        data: values,
+        backgroundColor: 'rgba(14,165,233,0.75)',
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: function(t) { return t[0].label; } } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+
+  // Halaman terpopuler
+  const topList = document.getElementById('halaman-top-list');
+  if (!data.halamanTop || data.halamanTop.length === 0) {
+    topList.innerHTML = '<p class="text-muted text-center small py-3">Belum ada data</p>';
+  } else {
+    const max = data.halamanTop[0].jml || 1;
+    topList.innerHTML = data.halamanTop.map(function(h, i) {
+      const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+      const pct = Math.round((h.jml / max) * 100);
+      return '<div class="rank-item">'
+        + '<div class="rank-badge ' + rankClass + '">' + (i + 1) + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:.82rem;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + h.nama + '</div>'
+        + '<div class="rank-bar-wrap mt-1"><div class="rank-bar" style="width:' + pct + '%"></div></div>'
+        + '</div>'
+        + '<span style="font-size:.82rem;font-weight:700;color:#0ea5e9;white-space:nowrap;">' + h.jml + ' kunjungan</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Tabel 10 kunjungan terakhir
+  const tbody = document.getElementById('visit-tbody');
+  if (!data.terakhir || data.terakhir.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada data</td></tr>';
+  } else {
+    tbody.innerHTML = data.terakhir.map(function(v, i) {
+      return '<tr>'
+        + '<td style="color:#94a3b8;font-weight:600;">' + (i + 1) + '</td>'
+        + '<td style="white-space:nowrap;">' + v.waktu + '</td>'
+        + '<td style="font-size:.83rem;color:#0f172a;">' + v.halaman + '</td>'
+        + '<td><span class="role-badge ' + (v.role === 'Admin' ? 'role-admin' : 'role-user') + '">' + v.role + '</span></td>'
+        + '</tr>';
+    }).join('');
+  }
+}
+
+function formatTglLabel(str) {
+  if (!str) return '';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
+}
+
+// ══════════════════════════════════════════════
+//  FUNGSI ADMIN
+// ══════════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('user').value;
+  const p = document.getElementById('pass').value;
+  google.script.run.withSuccessHandler(function(res) {
+    if (res.authorized) {
+      isAdmin = true;
+      document.getElementById('login-btn').style.display   = 'none';
+      document.getElementById('admin-badge').style.display = 'block';
+      loginModal.hide();
+      loadSidebar();
+      openFolder(currentId, document.getElementById('page-title').innerText, true);
+      alert('Berhasil masuk sebagai Admin.');
+    } else {
+      alert('Akses ditolak! Username atau password salah.');
+    }
+  }).checkAuth(u, p);
+}
+
+function promptNewFolder() {
+  const name = prompt('Nama Folder Baru:');
+  if (name) google.script.run
+    .withSuccessHandler(function() { openFolder(currentId, document.getElementById('page-title').innerText, true); })
+    .createNewFolder(name, currentId);
+}
+
+function promptRename(id, type, oldName) {
+  const newName = prompt('Nama Baru:', oldName);
+  if (newName && newName !== oldName) google.script.run
+    .withSuccessHandler(function() { openFolder(currentId, document.getElementById('page-title').innerText, true); })
+    .updateItem(id, type, newName, undefined);
+}
+
+function confirmDelete(id, type) {
+  if (confirm('Hapus item ini ke sampah?')) google.script.run
+    .withSuccessHandler(function() { openFolder(currentId, document.getElementById('page-title').innerText, true); })
+    .deleteItem(id, type);
+}
+
+function handleFileUpload(input) {
+  if (!input.files.length) return;
+  const file   = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    google.script.run.withSuccessHandler(function() {
+      alert('File berhasil diunggah!');
+      openFolder(currentId, document.getElementById('page-title').innerText, true);
+    }).uploadMaterialFile(e.target.result, file.name, currentId);
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleVisibility(id, type, isCurrentlyHidden) {
+  const newStatus = !isCurrentlyHidden;
+  const label     = newStatus ? 'disembunyikan dari mahasiswa' : 'ditampilkan kembali';
+  if (!confirm('Item ini akan ' + label + '. Lanjutkan?')) return;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.success === false) { alert('Gagal: ' + (res.msg || 'Terjadi kesalahan.')); return; }
+      openFolder(currentId, document.getElementById('page-title').innerText, true);
+      loadSidebar();
+    })
+    .withFailureHandler(function(err) { alert('Gagal: ' + (err.message || err)); })
+    .updateItem(id, type, null, newStatus);
+}
+
+// ══════════════════════════════════════════════
+//  PLAYER
+// ══════════════════════════════════════════════
+function play(u) {
+  const overlay = document.getElementById('player-overlay');
+  overlay.classList.add('active');
+  document.getElementById('player-frame').src = u;
+  document.body.style.overflow = 'hidden';
+}
+
+function closePlayer() {
+  const overlay = document.getElementById('player-overlay');
+  overlay.classList.remove('active');
+  document.getElementById('player-frame').src = '';
+  document.body.style.overflow = 'auto';
+}
+
+function toggleFullScreen() {
+  // Fullscreen OVERLAY (bukan iframe) agar blocker tetap aktif
+  const el = document.getElementById('player-overlay');
+  if (document.fullscreenElement) {
+    document.exitFullscreen && document.exitFullscreen();
+  } else if (el.requestFullscreen) {
+    el.requestFullscreen();
+  } else if (el.webkitRequestFullscreen) {
+    el.webkitRequestFullscreen();
+  } else if (el.msRequestFullscreen) {
+    el.msRequestFullscreen();
+  }
+}
+
+</script>
+<!-- FOOTER COPYRIGHT -->
+<footer id="app-footer">
+  <span>
+    &copy; <span id="footer-year"></span> Copyright by
+    <strong>Ahmad Musyafa, SKM., MPH.</strong>
+    &nbsp;·&nbsp; Portal Surveilans Epidemiologi &nbsp;·&nbsp; BKK Kelas I Samarinda • FETP Indonesia
+  </span>
+</footer>
+
+<script>
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
