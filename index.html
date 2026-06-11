@@ -298,46 +298,31 @@ async function loadSidebar() {
 }
 
 // 2. Aksi saat Salah Satu Menu Kategori Diklik
-// 2. Aksi saat Salah Satu Menu Kategori Diklik
 async function selectMenu(element, menuId, menuName) {
-  // 1. Pastikan panel normal yang tampil (bukan panel statistik)
-  showPanel('normal');
-
-  // 2. Efek warna biru pada menu yang aktif
   document.querySelectorAll('.nav-item-custom').forEach(el => el.classList.remove('active'));
   if (element) element.classList.add('active');
 
-  // 3. Mengubah Judul Halaman Kategori
-  const pageTitle = document.getElementById('page-title');
-  if (pageTitle) pageTitle.innerText = menuName;
+  document.getElementById('page-title').innerText = menuName;
+  showPanel('normal'); // pastikan panel normal aktif
 
-  // 4. Menampilkan loading langsung di dalam area grid konten
+  // ✅ Pakai ID yang benar
   const grid = document.getElementById('content-grid');
-  if (grid) {
-    grid.innerHTML = '<div class="col-12 text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i> Memuat data kelas...</div>';
-  }
+  grid.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>';
 
   try {
-    // 5. Ambil data dari tabel mata_kuliah berdasarkan ID kategori
     let { data: mataKuliah, error } = await supabaseClient
       .from('mata_kuliah')
       .select('*')
       .eq('menu_utama_id', menuId);
 
     if (error) throw error;
-    
-    // 6. Tampilkan daftar kartu mata kuliah ke layar
     renderMataKuliah(mataKuliah);
-    
+
   } catch (err) {
     console.error("Gagal memuat kelas:", err.message);
-    // Jika gagal, pesan eror sekarang akan muncul di layar (tidak nge-freeze lagi)
-    if (grid) {
-      grid.innerHTML = '<div class="col-12 text-center text-danger p-5"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>Gagal mengambil data perkuliahan: ' + err.message + '</div>';
-    }
+    grid.innerHTML = '<div class="col-12 text-center text-danger p-5">Gagal mengambil data. Cek koneksi Supabase.</div>';
   }
-}
-// 3. Render Kartu Kelas Kuliah ke dalam Grid Layar
+}// 3. Render Kartu Kelas Kuliah ke dalam Grid Layar
 function renderMataKuliah(daftarMK) {
   const grid = document.getElementById('content-grid');
   if (!grid) return;
