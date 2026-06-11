@@ -179,7 +179,7 @@
         <p class="text-muted m-0" style="font-size: 0.9rem;">Epidemiolog Kesehatan Ahli Madya • +6281253957679</p>
       </div>
     </div>
-    <img src="https://lh3.googleusercontent.com/d/1w1MuacRwJCCjOCGkkKVgNk4cwL5SkLQG">
+    <img src="https://lh3.googleusercontent.com/d/1w1MuacRwJCCjOCGkkKVgNk4cwL5SkLQG" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.15); margin-left: 20px;">
   </div>
 
   <div id="normal-panel" class="p-3 p-md-5" style="display:block;">
@@ -255,7 +255,7 @@
 // ══════════════════════════════════════════════
 const SUPABASE_URL = "https://dcsodanljmffoapavnzg.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_ekjj3GUKRSgauuFCVn_QjA_0psooypA"; 
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CBT_URL = 'https://script.google.com/macros/s/AKfycby4I0CXbQ4idFPOjSs_ZISp4DBFzeCKG3thzY8ZrQEf0CWzBPN9385xD_289xXevm0V/exec';
 let loginModal;
