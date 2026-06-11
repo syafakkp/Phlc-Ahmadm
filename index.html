@@ -620,25 +620,33 @@ async function selectMenu(el, menuId, menuName) {
 
 function renderMK(list, menuName, menuId) {
   const area = document.getElementById('content-area');
-  if (!list || list.length === 0) { area.innerHTML = emptyHTML('Belum Ada Mata Kuliah', 'Belum ada mata kuliah di kategori ini.'); return; }
+  if (!list || list.length === 0) { 
+    area.innerHTML = emptyHTML('Belum Ada Mata Kuliah', 'Belum ada mata kuliah di kategori ini.'); 
+    return; 
+  }
   area.innerHTML = `<div class="row g-3">${list.map(mk => `
     <div class="col-12 col-sm-6 col-lg-4">
-      <div class="card-mk ${!mk.is_active ? 'opacity-50' : ''}"
-           onclick="selectMK('${mk.id}','${escH(mk.nama_mk)}','${escH(menuName)}','${menuId}')">
-        <div class="card-mk-body">
-          <div class="mk-icon"><i class="fas fa-book-open"></i></div>
-          <h5>${escH(mk.nama_mk)}</h5>
-          <p>Klik untuk melihat daftar modul dan bahan ajar tersedia.</p>
-          ${!mk.is_active ? '<span class="status-badge status-off"><i class="fas fa-eye-slash"></i> Tersembunyi</span>' : ''}
-        </div>
-        <div class="card-mk-foot">
-          <span class="cnt"><i class="fas fa-layer-group me-1"></i>Lihat materi</span>
-          <button class="btn-buka"><i class="fas fa-chevron-right"></i> Buka</button>
+      <div class="card border-0 shadow-sm h-100" style="border-radius:12px;overflow:hidden;">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div style="width:36px;height:36px;background:#1e293b;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-book" style="color:#fff;font-size:.85rem;"></i>
+            </div>
+            <h5 class="m-0 fw-bold" style="font-size:.95rem;color:#0f172a;">${escH(mk.nama_mk)}</h5>
+          </div>
+          <p style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;line-height:1.5;">
+            Silakan akses ruang kelas dan materi belajar dengan menekan tombol.
+          </p>
+          ${!mk.is_active ? '<span class="status-badge status-off mb-2 d-inline-flex"><i class="fas fa-eye-slash me-1"></i>Tersembunyi</span><br>' : ''}
+          <button class="btn w-100 fw-bold py-2"
+            style="background:#1e293b;color:#fff;border-radius:8px;font-size:.85rem;border:none;"
+            onclick="selectMK('${mk.id}','${escH(mk.nama_mk)}','${escH(menuName)}','${menuId}')">
+            <i class="fas fa-book-reader me-2"></i>Buka Kelas
+          </button>
         </div>
       </div>
     </div>`).join('')}</div>`;
 }
-
 async function selectMK(mkId, mkName, menuName, menuId) {
   showPanel('normal');
   setTitle(mkName, 'book-open');
