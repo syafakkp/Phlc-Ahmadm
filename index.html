@@ -3,397 +3,677 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Public Health Learning Center</title>
+  <title>Public Health Learning Center – FETP Indonesia</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { --navy:#002d5d; --sidebar-bg:#0f172a; --gold:#c5a059; --text-gray:#94a3b8; }
-    body { background:#f8fafc; font-family:'Inter',sans-serif; margin:0; overflow-x:hidden; }
-    
-    /* Cegah drag & select pada elemen konten */
-    #player-wrapper { user-select:none; -webkit-user-select:none; }
-    #player-wrapper iframe { pointer-events:auto; }
-
-    /* ── Sidebar ── */
-    .sidebar { width:280px; background:var(--sidebar-bg); color:white; position:fixed; height:100vh; z-index:1050; transition:.3s; overflow-y:auto; display:flex; flex-direction:column; }
-    #side-nav { flex:1; overflow-y:auto; padding-bottom:8px; }
-    .nav-item-custom { padding:12px 20px; display:flex; align-items:center; color:var(--text-gray); cursor:pointer; border-left:4px solid transparent; transition:.2s; text-decoration:none; }
-    .nav-item-custom:hover,.nav-item-custom.active { background:#1e293b; color:white; border-left-color:var(--gold); }
-    .nav-item-custom i { width:25px; margin-right:12px; }
-    .sidebar-section-label { padding:14px 20px 4px; font-size:9.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#334155; }
-
-    /* CBT */
-    .nav-item-cbt { padding:12px 20px; display:flex; align-items:center; cursor:pointer; border-left:4px solid transparent; transition:.2s; color:var(--gold); font-weight:600; font-size:13.5px; background:rgba(197,160,89,.06); }
-    .nav-item-cbt i { width:25px; margin-right:12px; }
-    .nav-item-cbt:hover { background:rgba(197,160,89,.15); border-left-color:var(--gold); color:#dfc080; }
-    .nav-item-cbt.active { background:rgba(197,160,89,.18); border-left-color:var(--gold); color:white; }
-    .nav-item-cbt .badge-cbt { margin-left:auto; background:var(--gold); color:#002d5d; font-size:9px; font-weight:800; padding:2px 7px; border-radius:10px; }
-
-    /* Statistik */
-    .nav-item-stat { padding:12px 20px; display:flex; align-items:center; cursor:pointer; border-left:4px solid transparent; transition:.2s; color:#38bdf8; font-weight:600; font-size:13px; background:rgba(56,189,248,.05); }
-    .nav-item-stat i { width:25px; margin-right:12px; }
-    .nav-item-stat:hover { background:rgba(56,189,248,.12); border-left-color:#38bdf8; }
-    .nav-item-stat.active { background:rgba(56,189,248,.18); border-left-color:#38bdf8; color:white; }
-
-    /* ── Layout ── */
-    .main-content { margin-left:280px; width:calc(100% - 280px); transition:.3s; min-height:100vh; display:flex; flex-direction:column; }
-    .hero-header { background:white; padding:40px; border-bottom:8px solid var(--navy); display:flex; justify-content:space-between; align-items:center; }
-    .img-profile { width:220px; height:220px; object-fit:cover; border-radius:15px; border:5px solid white; box-shadow:10px 10px 0 var(--navy); }
-    .sidebar-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:1040; }
-
-    @media (max-width:991.98px) {
-      .sidebar { left:-280px; }
-      .sidebar.active { left:0; }
-      .sidebar-overlay.active { display:block; }
-      .main-content { margin-left:0; width:100%; }
-      .hero-header { flex-direction:column-reverse; text-align:center; padding:20px; gap:20px; }
-      .img-profile { width:120px; height:120px; }
+    :root {
+      --navy:    #002d5d;
+      --navy-dk: #001d3d;
+      --gold:    #c5a059;
+      --gold-lt: #e8d5a3;
+      --sidebar: #0b1120;
+      --sidebar-border: #1a2540;
+      --text-muted: #94a3b8;
+      --surface: #f0f4f8;
+      --white: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+      --info: #38bdf8;
     }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--surface); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    #player-wrapper { user-select: none; -webkit-user-select: none; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 272px; background: var(--sidebar); color: white;
+      position: fixed; height: 100vh; z-index: 1050;
+      transition: left .3s; overflow: hidden;
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--sidebar-border);
+    }
+    .sidebar-brand {
+      padding: 20px 18px 14px;
+      border-bottom: 1px solid var(--sidebar-border);
+      flex-shrink: 0;
+    }
+    .sidebar-brand .logo-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(197,160,89,.12); border: 1px solid rgba(197,160,89,.3);
+      border-radius: 8px; padding: 5px 10px; margin-bottom: 8px;
+    }
+    .sidebar-brand .logo-pill span { color: var(--gold); font-size: .7rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+    .sidebar-brand h2 { font-size: .9rem; font-weight: 700; color: white; line-height: 1.4; }
+    .sidebar-brand p  { font-size: .7rem; color: var(--text-muted); margin-top: 2px; }
+
+    #side-nav { flex: 1; overflow-y: auto; padding: 8px 0 12px; }
+    #side-nav::-webkit-scrollbar { width: 4px; }
+    #side-nav::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+
+    .nav-label {
+      padding: 14px 18px 5px;
+      font-size: 9px; font-weight: 800; letter-spacing: 1.8px;
+      text-transform: uppercase; color: #2d3f5a;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 18px; color: #7a90b0;
+      cursor: pointer; border-left: 3px solid transparent;
+      transition: all .18s; font-size: .83rem; font-weight: 500;
+      text-decoration: none;
+    }
+    .nav-item i { width: 18px; text-align: center; font-size: .85rem; flex-shrink: 0; }
+    .nav-item:hover { background: #111c30; color: white; border-left-color: #334155; }
+    .nav-item.active { background: #131f35; color: white; border-left-color: var(--gold); }
+    .nav-item .nav-badge {
+      margin-left: auto; font-size: .65rem; font-weight: 800;
+      padding: 2px 7px; border-radius: 20px;
+    }
+    .badge-gold { background: var(--gold); color: var(--navy); }
+    .badge-sky  { background: #0ea5e9; color: white; }
+
+    .sidebar-footer {
+      padding: 12px 14px; border-top: 1px solid var(--sidebar-border); flex-shrink: 0;
+    }
+
+    /* ── Layout ── */
+    .main-content { margin-left: 272px; width: calc(100% - 272px); min-height: 100vh; display: flex; flex-direction: column; transition: margin .3s, width .3s; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 1040; }
+
+    @media (max-width: 991.98px) {
+      .sidebar { left: -272px; }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay.open { display: block; }
+      .main-content { margin-left: 0; width: 100%; }
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy-dk) 0%, var(--navy) 60%, #004080 100%);
+      padding: 36px 40px; display: flex; justify-content: space-between;
+      align-items: center; gap: 24px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-text { position: relative; z-index: 1; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(197,160,89,.15); border: 1px solid rgba(197,160,89,.35);
+      color: var(--gold); font-size: .7rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 20px; margin-bottom: 14px;
+    }
+    .hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; font-weight: 800; color: white; line-height: 1.15; }
+    .hero h1 span { color: var(--gold-lt); }
+    .hero-sub { color: rgba(255,255,255,.6); font-size: .82rem; margin-top: 8px; line-height: 1.6; }
+    .hero-author { margin-top: 16px; display: flex; align-items: center; gap: 10px; }
+    .hero-author-dot { width: 36px; height: 36px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; color: var(--navy); }
+    .hero-author-name { font-size: .85rem; font-weight: 700; color: white; }
+    .hero-author-role { font-size: .72rem; color: rgba(255,255,255,.5); }
+    .hero-photo { position: relative; z-index: 1; flex-shrink: 0; }
+    .hero-photo img { width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(197,160,89,.5); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+
+    @media (max-width: 767px) {
+      .hero { flex-direction: column-reverse; text-align: center; padding: 24px 20px; }
+      .hero-author { justify-content: center; }
+      .hero h1 { font-size: 1.5rem; }
+      .hero-photo img { width: 90px; height: 90px; }
+    }
+
+    /* ── Main Panel ── */
+    #normal-panel { padding: 28px 32px; flex: 1; }
+    @media (max-width: 767px) { #normal-panel { padding: 16px; } }
+
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .panel-title { font-size: 1.1rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+    .panel-title .title-icon { width: 32px; height: 32px; background: rgba(0,45,93,.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--navy); font-size: .85rem; }
+
+    /* Breadcrumb */
+    .breadcrumb-bar {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .78rem; color: var(--text-muted); margin-bottom: 20px;
+      background: white; padding: 10px 16px; border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .breadcrumb-bar .crumb { cursor: pointer; color: #0ea5e9; font-weight: 600; }
+    .breadcrumb-bar .crumb:hover { text-decoration: underline; }
+    .breadcrumb-bar .sep { color: #cbd5e1; }
+    .breadcrumb-bar .current { color: var(--navy); font-weight: 700; }
+
+    /* Cards */
+    .card-mk {
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      border: 1px solid #e8edf5;
+      transition: transform .18s, box-shadow .18s;
+      overflow: hidden; cursor: pointer;
+      border-top: 4px solid var(--navy);
+    }
+    .card-mk:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,45,93,.13); }
+    .card-mk-body { padding: 22px; }
+    .card-mk-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(0,45,93,.08); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: var(--navy); font-size: 1.1rem; }
+    .card-mk h5 { font-size: .95rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; line-height: 1.35; }
+    .card-mk p  { font-size: .78rem; color: var(--text-muted); line-height: 1.5; }
+    .card-mk-footer { padding: 12px 22px; background: var(--surface); border-top: 1px solid #edf2f7; display: flex; align-items: center; justify-content: space-between; }
+    .card-mk-footer .count { font-size: .72rem; font-weight: 600; color: var(--text-muted); }
+    .btn-buka { font-size: .78rem; font-weight: 700; color: var(--navy); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .btn-buka:hover { color: #0ea5e9; }
+
+    /* Materi list */
+    .materi-item {
+      background: white; border-radius: 12px; padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06); border: 1px solid #e8edf5;
+      display: flex; align-items: center; gap: 16px;
+      transition: box-shadow .18s, transform .18s;
+      border-left: 4px solid var(--gold);
+    }
+    .materi-item:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateX(4px); }
+    .materi-num { width: 38px; height: 38px; border-radius: 10px; background: rgba(197,160,89,.12); border: 1px solid rgba(197,160,89,.3); color: var(--gold); font-weight: 800; font-size: .85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .materi-info { flex: 1; min-width: 0; }
+    .materi-info h6 { font-size: .9rem; font-weight: 700; color: var(--navy); margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .materi-info p  { font-size: .75rem; color: var(--text-muted); margin: 0; }
+    .btn-play {
+      background: var(--navy); color: white; border: none;
+      border-radius: 8px; padding: 8px 16px;
+      font-size: .78rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background .18s; flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .btn-play:hover { background: #0ea5e9; }
+
+    /* Empty / Loading */
+    .state-box { text-align: center; padding: 60px 20px; }
+    .state-box .state-icon { font-size: 2.5rem; margin-bottom: 14px; opacity: .3; }
+    .state-box h5 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .state-box p  { font-size: .82rem; color: var(--text-muted); }
+    .spinner-ring { display: inline-block; width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stats Panel ── */
+    #stats-panel { padding: 28px 32px; flex: 1; }
+    @media (max-width: 767px) { #stats-panel { padding: 16px; } }
+    .stat-card { border-radius: 14px; padding: 20px 18px; color: white; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+    .stat-card .stat-num { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+    .stat-card .stat-lbl { font-size: .72rem; opacity: .85; margin-top: 3px; font-weight: 600; letter-spacing: .4px; }
+    .stat-card .stat-icon { font-size: 2.8rem; opacity: .2; }
+    .sc-blue   { background: linear-gradient(135deg,#0ea5e9,#0284c7); }
+    .sc-green  { background: linear-gradient(135deg,#10b981,#059669); }
+    .sc-orange { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .sc-purple { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+    .stats-card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .stats-card-title { font-size: .88rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+
     /* ── Player ── */
-    #player-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:none; flex-direction:column; }
-    #player-overlay.active { display:flex; }
-    .player-toolbar { height:48px; background:#1a1a1a; display:flex; justify-content:space-between; align-items:center; padding:0 15px; flex-shrink:0; }
-    #player-frame { width:100%; flex:1; border:none; display:block; min-height:0; }
-
-    /* Blocker tombol open-in-new-tab Google */
-    #blocker-tr { position: absolute; top: 48px; right: 0; width: 52px; height: 52px; background: #1a1a1a; z-index: 10000; cursor: default; pointer-events: all; }
-
-    /* ── Panel Statistik ── */
-    #stats-panel { padding:24px 32px; flex: 1; }
-    .stat-card { border-radius:16px; padding:24px 20px; color:white; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 24px rgba(0,0,0,.12); transition:transform .2s; }
-    .stat-card:hover { transform:translateY(-4px); }
-    .stat-card .stat-num  { font-size:2.8rem; font-weight:800; line-height:1; }
-    .stat-card .stat-lbl  { font-size:.78rem; opacity:.85; margin-top:4px; font-weight:500; letter-spacing:.5px; }
-    .stat-card .stat-icon { font-size:3.2rem; opacity:.25; }
-    .sc-blue   { background:linear-gradient(135deg,#0ea5e9,#0284c7); }
-    .sc-green  { background:linear-gradient(135deg,#10b981,#059669); }
-    .sc-orange { background:linear-gradient(135deg,#f59e0b,#d97706); }
-    .sc-purple { background:linear-gradient(135deg,#8b5cf6,#7c3aed); }
-
-    .periode-pill { border-radius:30px; padding:6px 18px; border:1.5px solid #cbd5e1; font-size:.82rem; font-weight:600; cursor:pointer; transition:.2s; background:white; color:#475569; }
-    .periode-pill.active { background:#0ea5e9; border-color:#0ea5e9; color:white; }
-    .periode-pill:hover:not(.active) { border-color:#94a3b8; background:#f1f5f9; }
-
-    .stats-card { background:white; border-radius:16px; padding:24px; box-shadow:0 4px 16px rgba(0,0,0,.06); }
-    .stats-card-title { font-size:.9rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-
-    .rank-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
-    .rank-item:last-child { border-bottom:none; }
-    .rank-badge { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; flex-shrink:0; }
-    .rank-1 { background:#fef3c7; color:#d97706; }
-    .rank-2 { background:#e0f2fe; color:#0284c7; }
-    .rank-3 { background:#f0fdf4; color:#059669; }
-    .rank-n { background:#f1f5f9; color:#64748b; }
-    .rank-bar-wrap { flex:1; height:6px; background:#f1f5f9; border-radius:4px; overflow:hidden; }
-    .rank-bar { height:100%; border-radius:4px; background:linear-gradient(90deg,#0ea5e9,#38bdf8); }
-
-    .visit-table { width:100%; border-collapse:collapse; font-size:.82rem; }
-    .visit-table th { color:#94a3b8; font-weight:700; font-size:.72rem; letter-spacing:.8px; text-transform:uppercase; padding:8px 10px; border-bottom:1.5px solid #f1f5f9; }
-    .visit-table td { padding:10px 10px; border-bottom:1px solid #f8fafc; vertical-align:middle; }
-    .role-badge { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:10px; }
-    .role-admin { background:#fce7f3; color:#be185d; }
-    .role-user  { background:#e0f2fe; color:#0369a1; }
-
-    .btn-refresh { border:1.5px solid #0ea5e9; color:#0ea5e9; border-radius:8px; padding:5px 14px; font-size:.8rem; font-weight:600; cursor:pointer; background:white; transition:.2s; display:flex; align-items:center; gap:6px; }
-    .btn-refresh:hover { background:#0ea5e9; color:white; }
-    .btn-refresh.spinning i { animation:spin .7s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    .date-input { border:1.5px solid #e2e8f0; border-radius:8px; padding:6px 12px; font-size:.82rem; color:#334155; }
-    .btn-terapkan { background:#0ea5e9; color:white; border:none; border-radius:8px; padding:6px 16px; font-size:.82rem; font-weight:600; cursor:pointer; }
-    .btn-terapkan:hover { background:#0284c7; }
-    .badge-publik { font-size:.7rem; font-weight:700; padding:3px 10px; border-radius:12px; background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
+    #player-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; flex-direction: column; }
+    #player-overlay.active { display: flex; }
+    .player-toolbar { height: 50px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; flex-shrink: 0; border-bottom: 1px solid #222; }
+    #player-frame { width: 100%; flex: 1; border: none; display: block; min-height: 0; }
+    #blocker-tr { position: absolute; top: 50px; right: 0; width: 52px; height: 52px; background: #111; z-index: 10000; pointer-events: all; }
 
     /* ── Footer ── */
-    #app-footer { background: #fff; border-top: 1px solid #e2e8f0; padding: 1rem 1.5rem; text-align: center; font-size: 0.75rem; color: #64748b; margin-top: auto; }
+    #app-footer { background: white; border-top: 1px solid #e2e8f0; padding: 14px 20px; text-align: center; font-size: .72rem; color: var(--text-muted); margin-top: auto; }
     #app-footer strong { color: var(--navy); }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<div class="sidebar">
-  <div style="padding:16px 14px 6px;border-bottom:1px solid #0f1f3a;text-align:center;">
-    <p style="font-size:.75rem;color:#10b981;line-height:1.5;margin:0;">
-      <strong style="color:#10b981;">FETP Indonesia</strong><br>
-      Field Epidemiology Training Program Indonesia
-    </p>
+<!-- ══════ SIDEBAR ══════ -->
+<div class="sidebar" id="sidebar">
+
+  <div class="sidebar-brand">
+    <div class="logo-pill">
+      <i class="fas fa-shield-virus" style="color:var(--gold);font-size:.75rem;"></i>
+      <span>FETP Indonesia</span>
+    </div>
+    <h2>Public Health<br>Learning Center</h2>
+    <p>Field Epidemiology Training Program</p>
   </div>
 
-  <div class="p-3 border-bottom border-secondary mb-2 text-center">
-    <h5 class="fw-bold text-warning m-0" style="letter-spacing: 1px;">DASHBOARD</h5>
-    <small style="color:#10b981;">Portal Akademik</small>
-  </div>
-
-  <div id="side-nav">
-    <div class="sidebar-section-label">Menu Utama</div>
-    <div class="nav-item-custom active" id="btn-home" onclick="openHome()">
+  <nav id="side-nav">
+    <div class="nav-label">Navigasi</div>
+    <div class="nav-item active" id="btn-home" onclick="openHome()">
       <i class="fas fa-home"></i> Beranda
     </div>
 
-    <div id="dynamic-menu"></div>
+    <div class="nav-label" style="margin-top:6px;">Kurikulum</div>
+    <div id="dynamic-menu">
+      <div style="padding:16px 18px;font-size:.78rem;color:#334155;">
+        <div class="spinner-ring" style="width:20px;height:20px;border-width:2px;margin:0 auto 6px;"></div>
+      </div>
+    </div>
 
-    <div class="sidebar-section-label" style="margin-top:8px">Ujian Online</div>
-    <div class="nav-item-cbt" id="btn-cbt" onclick="openCBT()">
+    <div class="nav-label" style="margin-top:6px;">Ujian Online</div>
+    <div class="nav-item" id="btn-cbt" onclick="openCBT()">
       <i class="fas fa-laptop-code"></i> Computer Based Test
-      <span class="badge-cbt">↗ CBT</span>
+      <span class="nav-badge badge-gold">↗ CBT</span>
     </div>
 
-    <div class="sidebar-section-label" style="margin-top:8px">Analitik</div>
-    <div class="nav-item-stat" id="btn-stat" onclick="openStats()">
+    <div class="nav-label" style="margin-top:6px;">Analitik</div>
+    <div class="nav-item" id="btn-stat" onclick="openStats()">
       <i class="fas fa-chart-bar"></i> Statistik Kunjungan
+      <span class="nav-badge badge-sky">Live</span>
     </div>
-  </div>
+  </nav>
 
-  <div style="padding:12px 16px;border-top:1px solid #1e293b;flex-shrink:0;">
-    <button class="btn btn-outline-light btn-sm w-100" id="login-btn" onclick="loginModal.show()">
+  <div class="sidebar-footer">
+    <button class="btn btn-outline-secondary btn-sm w-100" style="font-size:.75rem;font-weight:600;" onclick="loginModal.show()">
       <i class="fas fa-lock me-1"></i> LOGIN ADMIN
     </button>
   </div>
 </div>
 
+<!-- ══════ MAIN CONTENT ══════ -->
 <div class="main-content">
 
-  <nav class="navbar navbar-dark bg-dark d-lg-none px-3 sticky-top">
-    <button class="navbar-toggler border-0" type="button" onclick="toggleSidebar()">
+  <!-- Mobile navbar -->
+  <nav class="navbar navbar-dark d-lg-none px-3 sticky-top" style="background:var(--navy);min-height:48px;">
+    <button class="navbar-toggler border-0 p-1" onclick="toggleSidebar()">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <span class="navbar-brand mb-0 h1" style="font-size:1rem;">Portal Akademik</span>
+    <span class="navbar-brand mb-0 h1" style="font-size:.9rem;font-weight:700;">Portal Akademik</span>
   </nav>
 
-  <div class="hero-header" id="hero-header">
-    <div>
-      <h5 style="color:var(--gold);letter-spacing:4px; font-weight: 600;">WELCOME TO</h5>
-      <h1 class="fw-800" style="font-size:2.8rem;line-height:1.1;color:var(--navy); font-weight: 800;">
-        Public Health Learning Center<br>
-        <span class="fw-bold" style="font-size:1.3rem; color: #475569;">Field Epidemiology Training Program Indonesia</span>
-      </h1>
-      <div class="mt-3">
-        <p class="text-muted" style="font-style: italic;">Empowering critical and impactful epidemiologists<br>Learn • Analyze • Prevent</p>
-        <h4 class="fw-bold m-0" style="color: var(--navy);">Ahmad Musyafa, SKM, MPH</h4>
-        <p class="text-muted m-0" style="font-size: 0.9rem;">Epidemiolog Kesehatan Ahli Madya • +6281253957679</p>
+  <!-- Hero -->
+  <div class="hero" id="hero-header">
+    <div class="hero-text">
+      <div class="hero-eyebrow"><i class="fas fa-microscope"></i> Portal Pembelajaran Mandiri</div>
+      <h1>Public Health<br><span>Learning Center</span></h1>
+      <p class="hero-sub">Empowering critical and impactful epidemiologists<br>Learn · Analyze · Prevent</p>
+      <div class="hero-author">
+        <div class="hero-author-dot">AM</div>
+        <div>
+          <div class="hero-author-name">Ahmad Musyafa, SKM, MPH</div>
+          <div class="hero-author-role">Epidemiolog Kesehatan Ahli Madya · BKK Kelas I Samarinda</div>
+        </div>
       </div>
     </div>
-    <img src="Ahmad.JPG" style="width: 200px; height: 200px; border-radius: 75%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.15); margin-left: 20px;">
-  </div>
-
-  <div id="normal-panel" class="p-3 p-md-5" style="display:block;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 id="page-title" class="fw-bold m-0" style="font-size:1.4rem; color: var(--navy);">Katalog Perkuliahan</h3>
+    <div class="hero-photo">
+      <img src="Ahmad.JPG" alt="Ahmad Musyafa" onerror="this.style.display='none'">
     </div>
-    
-    <div id="content-grid" class="row g-3 g-md-4"></div>
   </div>
 
+  <!-- Normal Panel -->
+  <div id="normal-panel" style="display:block;">
+
+    <!-- Breadcrumb (tersembunyi saat di home) -->
+    <div class="breadcrumb-bar" id="breadcrumb-bar" style="display:none;">
+      <span class="crumb" onclick="openHome()"><i class="fas fa-home me-1"></i>Beranda</span>
+      <span class="sep">›</span>
+      <span id="bc-menu" class="crumb"></span>
+      <span class="sep bc-mk-sep" style="display:none;">›</span>
+      <span id="bc-mk" class="current" style="display:none;"></span>
+    </div>
+
+    <div class="panel-header">
+      <div class="panel-title">
+        <div class="title-icon"><i class="fas fa-layer-group"></i></div>
+        <span id="page-title">Selamat Datang</span>
+      </div>
+    </div>
+
+    <div id="content-area">
+      <!-- Diisi dinamis oleh JS -->
+      <div class="state-box">
+        <div class="state-icon"><i class="fas fa-graduation-cap" style="color:var(--navy);opacity:1;font-size:3rem;"></i></div>
+        <h5>Selamat Datang di Portal Akademik</h5>
+        <p>Pilih kategori kurikulum di panel kiri<br>untuk mengakses bahan ajar dan materi perkuliahan.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Panel -->
   <div id="stats-panel" style="display:none;">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-          <h4 class="fw-bold m-0" style="color:#0f172a;">Statistik Kunjungan</h4>
-          <span class="badge-publik"><i class="fas fa-globe-asia me-1"></i>Publik</span>
-        </div>
-        <small class="text-muted">Rekap kunjungan pengguna</small>
+        <h4 class="fw-bold m-0" style="color:#0f172a;">Statistik Kunjungan</h4>
+        <small class="text-muted">Rekap aktivitas pengguna portal</small>
       </div>
-      <button class="btn-refresh" id="btn-refresh-stats" onclick="loadStats()">
-        <i class="fas fa-sync-alt"></i> Refresh
+      <button class="btn btn-sm btn-outline-primary fw-semibold" onclick="loadStats()">
+        <i class="fas fa-sync-alt me-1"></i> Refresh
       </button>
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-6 col-md-3"><div class="stat-card sc-blue"><div><div class="stat-num" id="sc-hari">12</div><div class="stat-lbl">Kunjungan Hari Ini</div></div><i class="fas fa-calendar-day stat-icon"></i></div></div>
-      <div class="col-6 col-md-3"><div class="stat-card sc-green"><div><div class="stat-num" id="sc-total">348</div><div class="stat-lbl">Total Kunjungan</div></div><i class="fas fa-users stat-icon"></i></div></div>
-      <div class="col-6 col-md-3"><div class="stat-card sc-orange"><div><div class="stat-num" id="sc-kegiatan">85</div><div class="stat-lbl">Total Kegiatan</div></div><i class="fas fa-clipboard-list stat-icon"></i></div></div>
-      <div class="col-6 col-md-3"><div class="stat-card sc-purple"><div><div class="stat-num" id="sc-halaman">6</div><div class="stat-lbl">Halaman Aktif</div></div><i class="fas fa-chart-line stat-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-blue"><div><div class="stat-num" id="sc-hari">—</div><div class="stat-lbl">Kunjungan Hari Ini</div></div><i class="fas fa-calendar-day stat-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-green"><div><div class="stat-num" id="sc-total">—</div><div class="stat-lbl">Total Kunjungan</div></div><i class="fas fa-users stat-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-orange"><div><div class="stat-num" id="sc-mk">—</div><div class="stat-lbl">Total Mata Kuliah</div></div><i class="fas fa-book stat-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-purple"><div><div class="stat-num" id="sc-materi">—</div><div class="stat-lbl">Total Materi</div></div><i class="fas fa-file-alt stat-icon"></i></div></div>
     </div>
 
-    <div class="stats-card mb-4">
-      <div class="stats-card-title"><i class="fas fa-chart-bar" style="color:#0ea5e9;"></i> Grafik Aktivitas Mingguan</div>
-      <div style="position:relative;height:240px;"><canvas id="grafik-kunjungan"></canvas></div>
+    <div class="stats-card">
+      <div class="stats-card-title"><i class="fas fa-chart-bar" style="color:#0ea5e9;"></i> Distribusi Materi per Mata Kuliah</div>
+      <div style="position:relative;height:260px;"><canvas id="grafik-kunjungan"></canvas></div>
     </div>
   </div>
 
   <footer id="app-footer">
-    © <span id="footer-year">2026</span> Copyright by 
-    <strong>Ahmad Musyafa, SKM, MPH.</strong> 
-    · Portal Surveilans Epidemiologi · BKK Kelas I Samarinda • FETP Indonesia
+    © <span id="footer-year"></span> <strong>Ahmad Musyafa, SKM, MPH</strong> ·
+    Portal Akademik FETP Indonesia · BKK Kelas I Samarinda
   </footer>
 </div>
 
+<!-- ══════ PLAYER OVERLAY ══════ -->
 <div id="player-overlay">
   <div class="player-toolbar">
-    <div class="d-flex gap-2">
-      <button class="btn btn-danger btn-sm px-3 fw-bold shadow" onclick="closePlayer()"><i class="fas fa-times"></i> TUTUP</button>
-      <button class="btn btn-primary btn-sm px-3 fw-bold shadow" onclick="toggleFullScreen()"><i class="fas fa-expand"></i> FULLSCREEN</button>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-danger btn-sm px-3 fw-bold" onclick="closePlayer()">
+        <i class="fas fa-times me-1"></i> Tutup
+      </button>
+      <button class="btn btn-secondary btn-sm px-3 fw-bold" onclick="toggleFullScreen()">
+        <i class="fas fa-expand me-1"></i> Layar Penuh
+      </button>
     </div>
-    <span class="text-white small">Pratinjau Keamanan Ruang Kuliah Digital</span>
+    <span class="text-white" style="font-size:.75rem;opacity:.6;">Ruang Kelas Digital · FETP Indonesia</span>
   </div>
   <iframe id="player-frame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
   <div id="blocker-tr"></div>
 </div>
 
+<!-- ══════ LOGIN MODAL ══════ -->
 <div class="modal fade" id="loginModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content p-4 border-0 shadow-lg">
-      <h5 class="text-center fw-bold mb-3">Login Admin</h5>
-      <input type="text" id="user" class="form-control mb-2" placeholder="Username">
-      <input type="password" id="pass" class="form-control mb-4" placeholder="Password">
-      <button class="btn btn-dark w-100 py-2 fw-bold" onclick="doLogin()">MASUK</button>
+    <div class="modal-content p-4 border-0 shadow-lg" style="border-radius:16px;">
+      <div class="text-center mb-3">
+        <div style="width:44px;height:44px;background:rgba(0,45,93,.08);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <i class="fas fa-lock" style="color:var(--navy);"></i>
+        </div>
+        <h5 class="fw-bold m-0">Login Admin</h5>
+        <small class="text-muted">Portal Manajemen Akademik</small>
+      </div>
+      <input type="text" id="inp-user" class="form-control mb-2" placeholder="Username" style="border-radius:8px;">
+      <input type="password" id="inp-pass" class="form-control mb-3" placeholder="Password" style="border-radius:8px;">
+      <button class="btn btn-dark w-100 fw-bold py-2" style="border-radius:8px;" onclick="doLogin()">
+        MASUK <i class="fas fa-arrow-right ms-1"></i>
+      </button>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
 // ══════════════════════════════════════════════
-//  KONFIGURASI DATABASE SUPABASE
+//  KONFIGURASI SUPABASE
+//  ⚠️ Ganti SUPABASE_ANON_KEY dengan key lengkap dari Project Settings > API
 // ══════════════════════════════════════════════
-const SUPABASE_URL = "https://dcsodanljmffoapavnzg.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_ekjj3GUKRSgauuFCVn_QjA_0psooypA"; 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL      = "https://dcsodanljmffoapavnzg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ekjj3GUKRSgauuFCVn_QjA_0psooypA";
+// Key valid berbentuk JWT panjang, contoh:
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjc29k...
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CBT_URL = 'https://script.google.com/macros/s/AKfycby4I0CXbQ4idFPOjSs_ZISp4DBFzeCKG3thzY8ZrQEf0CWzBPN9385xD_289xXevm0V/exec';
-let loginModal;
-let grafikChart = null;
+
+let loginModal, grafikChart = null;
 
 // ══════════════════════════════════════════════
-//  SISTEM DIJALANKAN PERTAMA KALI
+//  INIT
 // ══════════════════════════════════════════════
-window.onload = function() {
+window.onload = function () {
   loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
   document.getElementById('footer-year').innerText = new Date().getFullYear();
-
-  // Jalankan fungsi penarik data Supabase
-  loadSidebar(); 
+  loadSidebar();
   openHome();
 };
 
-// 1. Ambil Menu Kategori dari Tabel 'menu_utama'
+// ══════════════════════════════════════════════
+//  1. LOAD SIDEBAR — dari tabel 'menu_utama'
+// ══════════════════════════════════════════════
 async function loadSidebar() {
+  const container = document.getElementById('dynamic-menu');
   try {
-    let { data: categories, error } = await supabaseClient
+    const { data, error } = await db
       .from('menu_utama')
-      .select('*')
+      .select('id, nama_menu')
       .order('nama_menu', { ascending: true });
 
     if (error) throw error;
 
-    const menuContainer = document.getElementById('dynamic-menu');
-    if (categories && categories.length > 0) {
-      menuContainer.innerHTML = categories.map(function(c) {
-        return '<div class="nav-item-custom" onclick="selectMenu(this,\'' + c.id + '\',\'' + c.nama_menu + '\')">'
-             + '<i class="fas fa-folder"></i> ' + c.nama_menu + '</div>';
-      }).join('');
-    } else {
-      menuContainer.innerHTML = '<div class="text-muted p-3 small">Belum ada kategori menu.</div>';
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div style="padding:10px 18px;font-size:.78rem;color:#334155;">Belum ada kurikulum.</div>';
+      return;
     }
+
+    container.innerHTML = data.map(m => `
+      <div class="nav-item" id="menu-${m.id}"
+           onclick="selectMenu(this, '${m.id}', '${escHtml(m.nama_menu)}')">
+        <i class="fas fa-folder-open"></i> ${escHtml(m.nama_menu)}
+      </div>
+    `).join('');
+
   } catch (err) {
-    console.error("Gagal memuat sidebar:", err.message);
+    console.error('loadSidebar:', err.message);
+    container.innerHTML = '<div style="padding:10px 18px;font-size:.78rem;color:#ef4444;"><i class="fas fa-exclamation-circle me-1"></i>Gagal memuat menu.</div>';
   }
 }
 
-// 2. Aksi saat Salah Satu Menu Kategori Diklik
-async function selectMenu(element, menuId, menuName) {
-  document.querySelectorAll('.nav-item-custom').forEach(el => el.classList.remove('active'));
-  if (element) element.classList.add('active');
+// ══════════════════════════════════════════════
+//  2. PILIH MENU — tampilkan daftar Mata Kuliah
+//     dari tabel 'mata_kuliah' (filter menu_utama_id)
+// ══════════════════════════════════════════════
+async function selectMenu(el, menuId, menuName) {
+  clearActiveNav();
+  el.classList.add('active');
 
-  document.getElementById('page-title').innerText = menuName;
-  showPanel('normal'); // pastikan panel normal aktif
+  showPanel('normal');
+  setTitle(menuName, 'folder-open');
+  setBreadcrumb(menuName, null, menuId);
 
-  // ✅ Pakai ID yang benar
-  const grid = document.getElementById('content-grid');
-  grid.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></div>';
+  const area = document.getElementById('content-area');
+  area.innerHTML = loadingHTML();
 
   try {
-    let { data: mataKuliah, error } = await supabaseClient
+    const { data, error } = await db
       .from('mata_kuliah')
-      .select('*')
-      .eq('menu_utama_id', menuId);
+      .select('id, nama_mk')
+      .eq('menu_utama_id', menuId)
+      .order('nama_mk', { ascending: true });
 
     if (error) throw error;
-    renderMataKuliah(mataKuliah);
+    renderMataKuliah(data, menuName, menuId);
 
   } catch (err) {
-    console.error("Gagal memuat kelas:", err.message);
-    grid.innerHTML = '<div class="col-12 text-center text-danger p-5">Gagal mengambil data. Cek koneksi Supabase.</div>';
+    console.error('selectMenu:', err.message);
+    area.innerHTML = errorHTML('Gagal memuat mata kuliah. Periksa koneksi Supabase.');
   }
-}// 3. Render Kartu Kelas Kuliah ke dalam Grid Layar
-function renderMataKuliah(daftarMK) {
-  const grid = document.getElementById('content-grid');
-  if (!grid) return;
+}
 
-  if (!daftarMK || daftarMK.length === 0) {
-    grid.innerHTML = '<div class="col-12 text-center p-5 text-muted">Belum ada mata kuliah di dalam kategori ini.</div>';
+// ══════════════════════════════════════════════
+//  3. RENDER KARTU MATA KULIAH
+// ══════════════════════════════════════════════
+function renderMataKuliah(list, menuName, menuId) {
+  const area = document.getElementById('content-area');
+
+  if (!list || list.length === 0) {
+    area.innerHTML = emptyHTML('Belum Ada Mata Kuliah', 'Belum ada mata kuliah di kategori ini.');
     return;
   }
 
-  grid.innerHTML = ''; 
-  daftarMK.forEach(function(mk) {
-    grid.innerHTML += `
-      <div class="col-12 col-md-4">
-        <div class="card h-100 shadow-sm border-0" style="border-radius:12px; overflow:hidden; background:#fff; border-left:5px solid var(--gold);">
-          <div class="card-body p-4">
-            <div class="d-flex align-items-center gap-2 mb-3">
-              <div class="bg-primary bg-opacity-10 p-2 rounded text-navy d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
-                <i class="fas fa-book"></i>
-              </div>
-              <h5 class="card-title fw-bold m-0 text-navy" style="font-size:1.05rem;">${mk.nama_mk}</h5>
-            </div>
-            <p class="card-text text-muted small mb-4">Silakan akses ruang kelas dan materi belajar dengan menekan tombol.</p>
-            <button class="btn btn-sm btn-primary w-100 py-2 fw-semibold" style="border-radius:8px; background:var(--navy); border:none;" onclick="play('${mk.link_materi || ''}')">
-              <i class="fas fa-book-reader me-1"></i> Buka Kelas
-            </button>
+  area.innerHTML = `<div class="row g-3">
+    ${list.map(mk => `
+      <div class="col-12 col-sm-6 col-lg-4">
+        <div class="card-mk" onclick="selectMataKuliah('${mk.id}', '${escHtml(mk.nama_mk)}', '${escHtml(menuName)}', '${menuId}')">
+          <div class="card-mk-body">
+            <div class="card-mk-icon"><i class="fas fa-book-open"></i></div>
+            <h5>${escHtml(mk.nama_mk)}</h5>
+            <p>Klik untuk melihat daftar modul dan bahan ajar tersedia.</p>
+          </div>
+          <div class="card-mk-footer">
+            <span class="count"><i class="fas fa-layer-group me-1"></i>Lihat materi</span>
+            <button class="btn-buka"><i class="fas fa-chevron-right"></i> Buka</button>
           </div>
         </div>
       </div>
-    `;
-  });
+    `).join('')}
+  </div>`;
 }
 
-// 4. Pengatur Tampilan Halaman Depan / Rumah (Home)
-function openHome() {
-  clearActiveNav();
-  const btnHome = document.getElementById('btn-home');
-  if (btnHome) btnHome.classList.add('active');
-  
+// ══════════════════════════════════════════════
+//  4. PILIH MATA KULIAH — tampilkan daftar Materi
+//     dari tabel 'materi' (filter mata_kuliah_id)
+// ══════════════════════════════════════════════
+async function selectMataKuliah(mkId, mkName, menuName, menuId) {
   showPanel('normal');
-  document.getElementById('page-title').innerText = 'Public Health Learning Center';
-  
-  const grid = document.getElementById('content-grid');
-  if (grid) {
-    grid.innerHTML = `
-      <div class="col-12 text-center p-5">
-        <div class="mb-3 text-primary"><i class="fas fa-graduation-cap fa-3x" style="color:var(--navy);"></i></div>
-        <h4 class="fw-bold text-navy">Selamat Datang di Portal Pembelajaran Mandiri</h4>
-        <p class="text-muted mx-auto" style="max-width:550px; font-size:0.9rem;">
-          Gunakan panel menu navigasi di sebelah kiri untuk memilih kategori kurikulum, mengakses bahan ajar modul investigasi, serta mengkaji data epidemiologi terintegrasi.
-        </p>
-      </div>
-    `;
+  setTitle(mkName, 'book-open');
+  setBreadcrumb(menuName, mkName, menuId);
+
+  const area = document.getElementById('content-area');
+  area.innerHTML = loadingHTML();
+
+  try {
+    const { data, error } = await db
+      .from('materi')
+      .select('id, judul, deskripsi, link_drive')
+      .eq('mata_kuliah_id', mkId)
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+    renderMateri(data, mkName, mkId, menuName, menuId);
+
+  } catch (err) {
+    console.error('selectMataKuliah:', err.message);
+    area.innerHTML = errorHTML('Gagal memuat materi. Periksa koneksi Supabase.');
   }
 }
 
 // ══════════════════════════════════════════════
-//  NAVIGASI UTILITY & SWITCH PANEL
+//  5. RENDER DAFTAR MATERI
 // ══════════════════════════════════════════════
-function showPanel(panel) {
-  document.getElementById('normal-panel').style.display = (panel === 'normal') ? 'block' : 'none';
-  document.getElementById('stats-panel').style.display  = (panel === 'stats')  ? 'block' : 'none';
-  document.getElementById('hero-header').style.display  = (panel === 'normal') ? 'flex'  : 'none';
+function renderMateri(list, mkName, mkId, menuName, menuId) {
+  const area = document.getElementById('content-area');
+
+  if (!list || list.length === 0) {
+    area.innerHTML = emptyHTML('Belum Ada Materi', `Belum ada modul yang diunggah untuk mata kuliah <strong>${escHtml(mkName)}</strong>.`);
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="d-flex flex-column gap-3">
+      ${list.map((m, i) => `
+        <div class="materi-item">
+          <div class="materi-num">${String(i + 1).padStart(2, '0')}</div>
+          <div class="materi-info">
+            <h6>${escHtml(m.judul)}</h6>
+            <p>${escHtml(m.deskripsi || 'Klik tombol untuk membuka materi.')}</p>
+          </div>
+          <button class="btn-play" onclick="play('${escAttr(m.link_drive)}')">
+            <i class="fas fa-play-circle"></i> Buka
+          </button>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
-function clearActiveNav() {
-  document.querySelectorAll('.nav-item-custom, .nav-item-stat, .nav-item-cbt').forEach(el => el.classList.remove('active'));
+// ══════════════════════════════════════════════
+//  6. PLAYER
+// ══════════════════════════════════════════════
+function play(url) {
+  if (!url || url.trim() === '') {
+    alert('Link materi belum tersedia.');
+    return;
+  }
+  document.getElementById('player-overlay').classList.add('active');
+  document.getElementById('player-frame').src = url;
+  document.body.style.overflow = 'hidden';
 }
 
-function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('active');
-  document.querySelector('.sidebar-overlay').classList.toggle('active');
+function closePlayer() {
+  document.getElementById('player-overlay').classList.remove('active');
+  document.getElementById('player-frame').src = '';
+  document.body.style.overflow = 'auto';
+}
+
+function toggleFullScreen() {
+  const el = document.getElementById('player-overlay');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else el.requestFullscreen();
+}
+
+// ══════════════════════════════════════════════
+//  7. STATISTIK
+// ══════════════════════════════════════════════
+async function loadStats() {
+  // Hitung dari Supabase langsung
+  try {
+    const [rMK, rMateri] = await Promise.all([
+      db.from('mata_kuliah').select('id, nama_mk', { count: 'exact' }),
+      db.from('materi').select('id, mata_kuliah_id', { count: 'exact' })
+    ]);
+
+    const totalMK     = rMK.count || 0;
+    const totalMateri = rMateri.count || 0;
+
+    document.getElementById('sc-mk').innerText     = totalMK;
+    document.getElementById('sc-materi').innerText = totalMateri;
+    document.getElementById('sc-hari').innerText   = '—';
+    document.getElementById('sc-total').innerText  = '—';
+
+    // Grafik: jumlah materi per mata kuliah
+    const mkMap = {};
+    (rMK.data || []).forEach(m => { mkMap[m.id] = m.nama_mk; });
+
+    const countPerMK = {};
+    (rMateri.data || []).forEach(m => {
+      countPerMK[m.mata_kuliah_id] = (countPerMK[m.mata_kuliah_id] || 0) + 1;
+    });
+
+    const labels = Object.keys(countPerMK).map(id => mkMap[id] || `MK #${id}`);
+    const values = Object.values(countPerMK);
+
+    const ctx = document.getElementById('grafik-kunjungan');
+    if (!ctx) return;
+    if (grafikChart) grafikChart.destroy();
+
+    grafikChart = new Chart(ctx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Jumlah Materi',
+          data: values,
+          backgroundColor: 'rgba(0,45,93,0.75)',
+          borderRadius: 7,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+  } catch (err) {
+    console.error('loadStats:', err.message);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGASI UTILITIES
+// ══════════════════════════════════════════════
+function openHome() {
+  clearActiveNav();
+  document.getElementById('btn-home').classList.add('active');
+  showPanel('normal');
+  setTitle('Public Health Learning Center', 'graduation-cap');
+  document.getElementById('breadcrumb-bar').style.display = 'none';
+  document.getElementById('content-area').innerHTML = `
+    <div class="state-box">
+      <div class="state-icon"><i class="fas fa-graduation-cap" style="color:var(--navy);opacity:.9;font-size:3rem;"></i></div>
+      <h5>Selamat Datang di Portal Akademik</h5>
+      <p>Pilih kategori kurikulum di panel kiri<br>untuk mengakses bahan ajar dan materi perkuliahan.</p>
+    </div>`;
 }
 
 function openCBT() {
@@ -406,72 +686,90 @@ function openStats() {
   document.getElementById('btn-stat').classList.add('active');
   showPanel('stats');
   if (window.innerWidth < 992) toggleSidebar();
-  setTimeout(loadStats, 100);
+  setTimeout(loadStats, 80);
 }
 
-// ══════════════════════════════════════════════
-//  PLAYER MATERI INTERAKTIF
-// ══════════════════════════════════════════════
-function play(url) {
-  if(!url) { alert("Link materi belum tersedia."); return; }
-  const overlay = document.getElementById('player-overlay');
-  overlay.classList.add('active');
-  document.getElementById('player-frame').src = url;
-  document.body.style.overflow = 'hidden';
+function showPanel(which) {
+  document.getElementById('normal-panel').style.display = which === 'normal' ? 'block' : 'none';
+  document.getElementById('stats-panel').style.display  = which === 'stats'  ? 'block' : 'none';
+  document.getElementById('hero-header').style.display  = which === 'normal' ? 'flex'  : 'none';
 }
 
-function closePlayer() {
-  const overlay = document.getElementById('player-overlay');
-  overlay.classList.remove('active');
-  document.getElementById('player-frame').src = '';
-  document.body.style.overflow = 'auto';
+function clearActiveNav() {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 }
 
-function toggleFullScreen() {
-  const el = document.getElementById('player-overlay');
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+function setTitle(text, icon) {
+  document.getElementById('page-title').innerHTML =
+    `<div class="title-icon"><i class="fas fa-${icon}"></i></div> ${escHtml(text)}`;
+}
+
+// Breadcrumb — menuId digunakan untuk navigasi balik ke daftar MK
+let _bcMenuId = null;
+let _bcMenuName = null;
+
+function setBreadcrumb(menuName, mkName, menuId) {
+  _bcMenuId   = menuId;
+  _bcMenuName = menuName;
+
+  const bar    = document.getElementById('breadcrumb-bar');
+  const bcMenu = document.getElementById('bc-menu');
+  const bcMk   = document.getElementById('bc-mk');
+  const sep    = document.querySelector('.bc-mk-sep');
+
+  bar.style.display = 'flex';
+  bcMenu.innerText  = menuName;
+  bcMenu.onclick    = () => goBackToMenu();
+
+  if (mkName) {
+    sep.style.display   = 'inline';
+    bcMk.style.display  = 'inline';
+    bcMk.innerText      = mkName;
+    bcMenu.className    = 'crumb';
   } else {
-    el.requestFullscreen();
+    sep.style.display   = 'none';
+    bcMk.style.display  = 'none';
+    bcMenu.className    = 'current';
+    bcMenu.onclick      = null;
   }
 }
 
-// ══════════════════════════════════════════════
-//  STATISTIK GENERATOR (Tampilan Publik Aman)
-// ══════════════════════════════════════════════
-function loadStats() {
-  const ctx = document.getElementById('grafik-kunjungan');
-  if (!ctx) return;
+function goBackToMenu() {
+  if (_bcMenuId && _bcMenuName) {
+    const el = document.getElementById(`menu-${_bcMenuId}`);
+    selectMenu(el || { classList: { add: () => {} } }, _bcMenuId, _bcMenuName);
+  }
+}
 
-  if (grafikChart) grafikChart.destroy();
-  
-  // Membuat tiruan data tren grafik aman lokal (Tanpa merusak / memanggil GAS lama)
-  grafikChart = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-      datasets: [{
-        label: 'Aktivitas Mahasiswa',
-        data: [42, 58, 64, 71, 39, 14, 28],
-        backgroundColor: 'rgba(14, 165, 233, 0.8)',
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
+function doLogin() {
+  alert("Sistem Manajemen Admin sedang dalam tahap migrasi ke Supabase Auth.");
+  loginModal.hide();
 }
 
 // ══════════════════════════════════════════════
-//  PLACEHOLDER KEAMANAN ADMIN (SIAP MIGRASI SUPABASE)
+//  HELPER
 // ══════════════════════════════════════════════
-function doLogin() {
-  alert("Sistem Manajemen File Admin sedang dalam tahap pemindahan infrastruktur Cloud ke Supabase Auth Vercel.");
-  loginModal.hide();
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str) {
+  if (!str) return '';
+  return str.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+}
+function loadingHTML() {
+  return `<div class="state-box"><div class="spinner-ring"></div><p style="color:var(--text-muted);">Memuat data...</p></div>`;
+}
+function emptyHTML(title, msg) {
+  return `<div class="state-box"><div class="state-icon"><i class="fas fa-inbox"></i></div><h5>${title}</h5><p>${msg}</p></div>`;
+}
+function errorHTML(msg) {
+  return `<div class="state-box"><div class="state-icon" style="color:#ef4444;opacity:1;"><i class="fas fa-exclamation-circle"></i></div><h5>Terjadi Kesalahan</h5><p>${msg}</p></div>`;
 }
 </script>
 </body>
