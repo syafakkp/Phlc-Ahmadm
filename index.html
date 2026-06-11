@@ -255,7 +255,7 @@
 // ══════════════════════════════════════════════
 const SUPABASE_URL = "https://dcsodanljmffoapavnzg.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_ekjj3GUKRSgauuFCVn_QjA_0psooypA"; 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CBT_URL = 'https://script.google.com/macros/s/AKfycby4I0CXbQ4idFPOjSs_ZISp4DBFzeCKG3thzY8ZrQEf0CWzBPN9385xD_289xXevm0V/exec';
 let loginModal;
@@ -276,7 +276,7 @@ window.onload = function() {
 // 1. Ambil Menu Kategori dari Tabel 'menu_utama'
 async function loadSidebar() {
   try {
-    let { data: categories, error } = await _supabase
+    let { data: categories, error } = await supabaseClient
       .from('menu_utama')
       .select('*')
       .order('nama_menu', { ascending: true });
@@ -318,7 +318,7 @@ async function selectMenu(element, id, name) {
 
   try {
     // Cari data di tabel 'mata_kuliah' berdasarkan Relasi ID Kategori Menu
-    let { data: mataKuliah, error } = await _supabase
+    let { data: mataKuliah, error } = await supabaseClient
       .from('mata_kuliah')
       .select('*')
       .eq('menu_utama_id', id);
