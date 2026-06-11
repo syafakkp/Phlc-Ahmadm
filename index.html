@@ -11,230 +11,223 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --navy:    #002d5d;
-      --navy-dk: #001d3d;
-      --gold:    #c5a059;
-      --gold-lt: #e8d5a3;
-      --sidebar: #0b1120;
-      --sidebar-border: #1a2540;
-      --text-muted: #94a3b8;
-      --surface: #f0f4f8;
-      --white: #ffffff;
-      --danger: #ef4444;
-      --success: #10b981;
-      --info: #38bdf8;
+      --navy:#002d5d; --navy-dk:#001d3d; --gold:#c5a059; --gold-lt:#e8d5a3;
+      --sidebar:#0b1120; --sb-border:#1a2540; --muted:#94a3b8;
+      --surface:#f0f4f8; --white:#fff;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--surface);font-family:'Inter',sans-serif;overflow-x:hidden;}
+
+    /* ── SIDEBAR ── */
+    .sidebar{width:272px;background:var(--sidebar);color:#fff;position:fixed;height:100vh;
+      z-index:1050;transition:left .3s;display:flex;flex-direction:column;
+      border-right:1px solid var(--sb-border);}
+    .sb-brand{padding:18px 18px 12px;border-bottom:1px solid var(--sb-border);flex-shrink:0;}
+    .sb-brand .pill{display:inline-flex;align-items:center;gap:7px;
+      background:rgba(197,160,89,.12);border:1px solid rgba(197,160,89,.3);
+      border-radius:8px;padding:4px 10px;margin-bottom:7px;}
+    .sb-brand .pill span{color:var(--gold);font-size:.68rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;}
+    .sb-brand h2{font-size:.88rem;font-weight:700;color:#fff;line-height:1.4;}
+    .sb-brand p{font-size:.68rem;color:var(--muted);margin-top:2px;}
+    #side-nav{flex:1;overflow-y:auto;padding:6px 0 10px;}
+    #side-nav::-webkit-scrollbar{width:3px;}
+    #side-nav::-webkit-scrollbar-thumb{background:#1e293b;border-radius:4px;}
+    .nav-label{padding:13px 18px 4px;font-size:8.5px;font-weight:800;letter-spacing:1.8px;
+      text-transform:uppercase;color:#2d3f5a;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:#7a90b0;
+      cursor:pointer;border-left:3px solid transparent;transition:all .17s;
+      font-size:.82rem;font-weight:500;}
+    .nav-item i{width:17px;text-align:center;font-size:.82rem;flex-shrink:0;}
+    .nav-item:hover{background:#111c30;color:#fff;border-left-color:#334155;}
+    .nav-item.active{background:#131f35;color:#fff;border-left-color:var(--gold);}
+    .nav-item .nbadge{margin-left:auto;font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:20px;}
+    .bg-gold{background:var(--gold);color:var(--navy);}
+    .bg-sky{background:#0ea5e9;color:#fff;}
+    .bg-red{background:#ef4444;color:#fff;}
+    .sb-footer{padding:11px 13px;border-top:1px solid var(--sb-border);flex-shrink:0;}
+
+    /* ── LAYOUT ── */
+    .main-content{margin-left:272px;width:calc(100% - 272px);min-height:100vh;
+      display:flex;flex-direction:column;transition:margin .3s,width .3s;}
+    .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1040;}
+    @media(max-width:991.98px){
+      .sidebar{left:-272px;} .sidebar.open{left:0;}
+      .sb-overlay.open{display:block;}
+      .main-content{margin-left:0;width:100%;}
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--surface); font-family: 'Inter', sans-serif; overflow-x: hidden; }
-    #player-wrapper { user-select: none; -webkit-user-select: none; }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 272px; background: var(--sidebar); color: white;
-      position: fixed; height: 100vh; z-index: 1050;
-      transition: left .3s; overflow: hidden;
-      display: flex; flex-direction: column;
-      border-right: 1px solid var(--sidebar-border);
-    }
-    .sidebar-brand {
-      padding: 20px 18px 14px;
-      border-bottom: 1px solid var(--sidebar-border);
-      flex-shrink: 0;
-    }
-    .sidebar-brand .logo-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(197,160,89,.12); border: 1px solid rgba(197,160,89,.3);
-      border-radius: 8px; padding: 5px 10px; margin-bottom: 8px;
-    }
-    .sidebar-brand .logo-pill span { color: var(--gold); font-size: .7rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
-    .sidebar-brand h2 { font-size: .9rem; font-weight: 700; color: white; line-height: 1.4; }
-    .sidebar-brand p  { font-size: .7rem; color: var(--text-muted); margin-top: 2px; }
-
-    #side-nav { flex: 1; overflow-y: auto; padding: 8px 0 12px; }
-    #side-nav::-webkit-scrollbar { width: 4px; }
-    #side-nav::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-
-    .nav-label {
-      padding: 14px 18px 5px;
-      font-size: 9px; font-weight: 800; letter-spacing: 1.8px;
-      text-transform: uppercase; color: #2d3f5a;
-    }
-    .nav-item {
-      display: flex; align-items: center; gap: 11px;
-      padding: 10px 18px; color: #7a90b0;
-      cursor: pointer; border-left: 3px solid transparent;
-      transition: all .18s; font-size: .83rem; font-weight: 500;
-      text-decoration: none;
-    }
-    .nav-item i { width: 18px; text-align: center; font-size: .85rem; flex-shrink: 0; }
-    .nav-item:hover { background: #111c30; color: white; border-left-color: #334155; }
-    .nav-item.active { background: #131f35; color: white; border-left-color: var(--gold); }
-    .nav-item .nav-badge {
-      margin-left: auto; font-size: .65rem; font-weight: 800;
-      padding: 2px 7px; border-radius: 20px;
-    }
-    .badge-gold { background: var(--gold); color: var(--navy); }
-    .badge-sky  { background: #0ea5e9; color: white; }
-
-    .sidebar-footer {
-      padding: 12px 14px; border-top: 1px solid var(--sidebar-border); flex-shrink: 0;
+    /* ── HERO ── */
+    .hero{background:linear-gradient(135deg,var(--navy-dk) 0%,var(--navy) 60%,#004080 100%);
+      padding:34px 38px;display:flex;justify-content:space-between;align-items:center;
+      gap:22px;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;inset:0;
+      background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
+    .hero-text{position:relative;z-index:1;}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:7px;
+      background:rgba(197,160,89,.15);border:1px solid rgba(197,160,89,.35);
+      color:var(--gold);font-size:.68rem;font-weight:700;letter-spacing:1.5px;
+      text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:13px;}
+    .hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.9rem;font-weight:800;
+      color:#fff;line-height:1.15;}
+    .hero h1 span{color:var(--gold-lt);}
+    .hero-sub{color:rgba(255,255,255,.58);font-size:.8rem;margin-top:7px;line-height:1.6;}
+    .hero-author{margin-top:14px;display:flex;align-items:center;gap:10px;}
+    .hero-dot{width:34px;height:34px;border-radius:50%;background:var(--gold);
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;color:var(--navy);}
+    .hero-name{font-size:.83rem;font-weight:700;color:#fff;}
+    .hero-role{font-size:.7rem;color:rgba(255,255,255,.5);}
+    .hero-photo{position:relative;z-index:1;flex-shrink:0;}
+    .hero-photo img{width:120px;height:120px;border-radius:50%;object-fit:cover;
+      border:3px solid rgba(197,160,89,.5);box-shadow:0 8px 28px rgba(0,0,0,.4);}
+    @media(max-width:767px){
+      .hero{flex-direction:column-reverse;text-align:center;padding:22px 18px;}
+      .hero-author{justify-content:center;} .hero h1{font-size:1.45rem;}
+      .hero-photo img{width:80px;height:80px;}
     }
 
-    /* ── Layout ── */
-    .main-content { margin-left: 272px; width: calc(100% - 272px); min-height: 100vh; display: flex; flex-direction: column; transition: margin .3s, width .3s; }
-    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 1040; }
-
-    @media (max-width: 991.98px) {
-      .sidebar { left: -272px; }
-      .sidebar.open { left: 0; }
-      .sidebar-overlay.open { display: block; }
-      .main-content { margin-left: 0; width: 100%; }
+    /* ── PANELS ── */
+    #normal-panel,#stats-panel,#admin-panel{padding:26px 30px;flex:1;}
+    @media(max-width:767px){
+      #normal-panel,#stats-panel,#admin-panel{padding:14px;}
     }
 
-    /* ── Hero ── */
-    .hero {
-      background: linear-gradient(135deg, var(--navy-dk) 0%, var(--navy) 60%, #004080 100%);
-      padding: 36px 40px; display: flex; justify-content: space-between;
-      align-items: center; gap: 24px; position: relative; overflow: hidden;
-    }
-    .hero::before {
-      content: ''; position: absolute; inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-    .hero-text { position: relative; z-index: 1; }
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: rgba(197,160,89,.15); border: 1px solid rgba(197,160,89,.35);
-      color: var(--gold); font-size: .7rem; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 4px 12px; border-radius: 20px; margin-bottom: 14px;
-    }
-    .hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; font-weight: 800; color: white; line-height: 1.15; }
-    .hero h1 span { color: var(--gold-lt); }
-    .hero-sub { color: rgba(255,255,255,.6); font-size: .82rem; margin-top: 8px; line-height: 1.6; }
-    .hero-author { margin-top: 16px; display: flex; align-items: center; gap: 10px; }
-    .hero-author-dot { width: 36px; height: 36px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; color: var(--navy); }
-    .hero-author-name { font-size: .85rem; font-weight: 700; color: white; }
-    .hero-author-role { font-size: .72rem; color: rgba(255,255,255,.5); }
-    .hero-photo { position: relative; z-index: 1; flex-shrink: 0; }
-    .hero-photo img { width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(197,160,89,.5); box-shadow: 0 8px 32px rgba(0,0,0,.4); }
-
-    @media (max-width: 767px) {
-      .hero { flex-direction: column-reverse; text-align: center; padding: 24px 20px; }
-      .hero-author { justify-content: center; }
-      .hero h1 { font-size: 1.5rem; }
-      .hero-photo img { width: 90px; height: 90px; }
-    }
-
-    /* ── Main Panel ── */
-    #normal-panel { padding: 28px 32px; flex: 1; }
-    @media (max-width: 767px) { #normal-panel { padding: 16px; } }
-
-    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .panel-title { font-size: 1.1rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; }
-    .panel-title .title-icon { width: 32px; height: 32px; background: rgba(0,45,93,.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--navy); font-size: .85rem; }
+    .panel-title{font-size:1.05rem;font-weight:800;color:var(--navy);
+      display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+    .panel-title .ti{width:30px;height:30px;background:rgba(0,45,93,.09);border-radius:8px;
+      display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:.82rem;}
 
     /* Breadcrumb */
-    .breadcrumb-bar {
-      display: flex; align-items: center; gap: 8px;
-      font-size: .78rem; color: var(--text-muted); margin-bottom: 20px;
-      background: white; padding: 10px 16px; border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-    }
-    .breadcrumb-bar .crumb { cursor: pointer; color: #0ea5e9; font-weight: 600; }
-    .breadcrumb-bar .crumb:hover { text-decoration: underline; }
-    .breadcrumb-bar .sep { color: #cbd5e1; }
-    .breadcrumb-bar .current { color: var(--navy); font-weight: 700; }
+    .bc-bar{display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--muted);
+      margin-bottom:18px;background:#fff;padding:9px 15px;border-radius:10px;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);}
+    .bc-bar .crumb{cursor:pointer;color:#0ea5e9;font-weight:600;}
+    .bc-bar .crumb:hover{text-decoration:underline;}
+    .bc-bar .sep{color:#cbd5e1;}
+    .bc-bar .cur{color:var(--navy);font-weight:700;}
 
-    /* Cards */
-    .card-mk {
-      background: white; border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.07);
-      border: 1px solid #e8edf5;
-      transition: transform .18s, box-shadow .18s;
-      overflow: hidden; cursor: pointer;
-      border-top: 4px solid var(--navy);
-    }
-    .card-mk:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,45,93,.13); }
-    .card-mk-body { padding: 22px; }
-    .card-mk-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(0,45,93,.08); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: var(--navy); font-size: 1.1rem; }
-    .card-mk h5 { font-size: .95rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; line-height: 1.35; }
-    .card-mk p  { font-size: .78rem; color: var(--text-muted); line-height: 1.5; }
-    .card-mk-footer { padding: 12px 22px; background: var(--surface); border-top: 1px solid #edf2f7; display: flex; align-items: center; justify-content: space-between; }
-    .card-mk-footer .count { font-size: .72rem; font-weight: 600; color: var(--text-muted); }
-    .btn-buka { font-size: .78rem; font-weight: 700; color: var(--navy); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-    .btn-buka:hover { color: #0ea5e9; }
+    /* MK Cards */
+    .card-mk{background:#fff;border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.07);
+      border:1px solid #e8edf5;border-top:4px solid var(--navy);
+      transition:transform .17s,box-shadow .17s;overflow:hidden;cursor:pointer;}
+    .card-mk:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,45,93,.13);}
+    .card-mk-body{padding:20px;}
+    .mk-icon{width:42px;height:42px;border-radius:10px;background:rgba(0,45,93,.08);
+      display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+      color:var(--navy);font-size:1.05rem;}
+    .card-mk h5{font-size:.92rem;font-weight:700;color:var(--navy);margin-bottom:5px;line-height:1.35;}
+    .card-mk p{font-size:.76rem;color:var(--muted);line-height:1.5;}
+    .card-mk-foot{padding:10px 20px;background:var(--surface);border-top:1px solid #edf2f7;
+      display:flex;align-items:center;justify-content:space-between;}
+    .card-mk-foot .cnt{font-size:.7rem;font-weight:600;color:var(--muted);}
+    .btn-buka{font-size:.76rem;font-weight:700;color:var(--navy);background:none;border:none;
+      cursor:pointer;display:flex;align-items:center;gap:5px;}
+    .btn-buka:hover{color:#0ea5e9;}
 
     /* Materi list */
-    .materi-item {
-      background: white; border-radius: 12px; padding: 18px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.06); border: 1px solid #e8edf5;
-      display: flex; align-items: center; gap: 16px;
-      transition: box-shadow .18s, transform .18s;
-      border-left: 4px solid var(--gold);
-    }
-    .materi-item:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateX(4px); }
-    .materi-num { width: 38px; height: 38px; border-radius: 10px; background: rgba(197,160,89,.12); border: 1px solid rgba(197,160,89,.3); color: var(--gold); font-weight: 800; font-size: .85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .materi-info { flex: 1; min-width: 0; }
-    .materi-info h6 { font-size: .9rem; font-weight: 700; color: var(--navy); margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .materi-info p  { font-size: .75rem; color: var(--text-muted); margin: 0; }
-    .btn-play {
-      background: var(--navy); color: white; border: none;
-      border-radius: 8px; padding: 8px 16px;
-      font-size: .78rem; font-weight: 700; cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
-      transition: background .18s; flex-shrink: 0;
-      white-space: nowrap;
-    }
-    .btn-play:hover { background: #0ea5e9; }
+    .materi-item{background:#fff;border-radius:11px;padding:16px 18px;
+      box-shadow:0 2px 7px rgba(0,0,0,.06);border:1px solid #e8edf5;border-left:4px solid var(--gold);
+      display:flex;align-items:center;gap:15px;transition:box-shadow .17s,transform .17s;}
+    .materi-item:hover{box-shadow:0 5px 18px rgba(0,0,0,.1);transform:translateX(3px);}
+    .mat-num{width:36px;height:36px;border-radius:9px;background:rgba(197,160,89,.12);
+      border:1px solid rgba(197,160,89,.3);color:var(--gold);font-weight:800;font-size:.82rem;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .mat-info{flex:1;min-width:0;}
+    .mat-info h6{font-size:.88rem;font-weight:700;color:var(--navy);margin:0 0 3px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .mat-info p{font-size:.73rem;color:var(--muted);margin:0;}
+    .btn-play{background:var(--navy);color:#fff;border:none;border-radius:8px;
+      padding:7px 15px;font-size:.75rem;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;gap:5px;transition:background .17s;flex-shrink:0;}
+    .btn-play:hover{background:#0ea5e9;}
 
-    /* Empty / Loading */
-    .state-box { text-align: center; padding: 60px 20px; }
-    .state-box .state-icon { font-size: 2.5rem; margin-bottom: 14px; opacity: .3; }
-    .state-box h5 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
-    .state-box p  { font-size: .82rem; color: var(--text-muted); }
-    .spinner-ring { display: inline-block; width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 12px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* State boxes */
+    .state-box{text-align:center;padding:55px 20px;}
+    .state-box .si{font-size:2.5rem;margin-bottom:12px;opacity:.28;}
+    .state-box h5{font-size:.98rem;font-weight:700;color:var(--navy);margin-bottom:5px;}
+    .state-box p{font-size:.8rem;color:var(--muted);}
+    .spin{display:inline-block;width:34px;height:34px;border:3px solid #e2e8f0;
+      border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
 
-    /* ── Stats Panel ── */
-    #stats-panel { padding: 28px 32px; flex: 1; }
-    @media (max-width: 767px) { #stats-panel { padding: 16px; } }
-    .stat-card { border-radius: 14px; padding: 20px 18px; color: white; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
-    .stat-card .stat-num { font-size: 2.4rem; font-weight: 800; line-height: 1; }
-    .stat-card .stat-lbl { font-size: .72rem; opacity: .85; margin-top: 3px; font-weight: 600; letter-spacing: .4px; }
-    .stat-card .stat-icon { font-size: 2.8rem; opacity: .2; }
-    .sc-blue   { background: linear-gradient(135deg,#0ea5e9,#0284c7); }
-    .sc-green  { background: linear-gradient(135deg,#10b981,#059669); }
-    .sc-orange { background: linear-gradient(135deg,#f59e0b,#d97706); }
-    .sc-purple { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
-    .stats-card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
-    .stats-card-title { font-size: .88rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    /* ── STATS ── */
+    .stat-card{border-radius:13px;padding:18px 16px;color:#fff;
+      display:flex;align-items:center;justify-content:space-between;
+      box-shadow:0 5px 18px rgba(0,0,0,.12);}
+    .stat-card .sn{font-size:2.2rem;font-weight:800;line-height:1;}
+    .stat-card .sl{font-size:.7rem;opacity:.85;margin-top:3px;font-weight:600;letter-spacing:.4px;}
+    .stat-card .sico{font-size:2.6rem;opacity:.2;}
+    .sc-blue{background:linear-gradient(135deg,#0ea5e9,#0284c7);}
+    .sc-green{background:linear-gradient(135deg,#10b981,#059669);}
+    .sc-orange{background:linear-gradient(135deg,#f59e0b,#d97706);}
+    .sc-purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed);}
+    .stats-card{background:#fff;border-radius:13px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
 
-    /* ── Player ── */
-    #player-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; flex-direction: column; }
-    #player-overlay.active { display: flex; }
-    .player-toolbar { height: 50px; background: #111; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; flex-shrink: 0; border-bottom: 1px solid #222; }
-    #player-frame { width: 100%; flex: 1; border: none; display: block; min-height: 0; }
-    #blocker-tr { position: absolute; top: 50px; right: 0; width: 52px; height: 52px; background: #111; z-index: 10000; pointer-events: all; }
+    /* ── ADMIN PANEL ── */
+    .adm-tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+    .adm-tab{padding:8px 18px;border-radius:9px;border:1.5px solid #e2e8f0;
+      font-size:.8rem;font-weight:700;cursor:pointer;background:#fff;color:#64748b;transition:.18s;}
+    .adm-tab:hover{border-color:var(--navy);color:var(--navy);}
+    .adm-tab.active{background:var(--navy);border-color:var(--navy);color:#fff;}
 
-    /* ── Footer ── */
-    #app-footer { background: white; border-top: 1px solid #e2e8f0; padding: 14px 20px; text-align: center; font-size: .72rem; color: var(--text-muted); margin-top: auto; }
-    #app-footer strong { color: var(--navy); }
+    .adm-card{background:#fff;border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.07);
+      border:1px solid #e8edf5;overflow:hidden;margin-bottom:14px;}
+    .adm-card-header{background:var(--surface);padding:10px 18px;border-bottom:1px solid #e8edf5;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    .adm-card-header h6{font-size:.88rem;font-weight:700;color:var(--navy);margin:0;}
+
+    .adm-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+    .adm-table th{color:var(--muted);font-weight:700;font-size:.7rem;letter-spacing:.8px;
+      text-transform:uppercase;padding:9px 14px;border-bottom:1.5px solid #f1f5f9;white-space:nowrap;}
+    .adm-table td{padding:10px 14px;border-bottom:1px solid #f8fafc;vertical-align:middle;}
+    .adm-table tr:last-child td{border-bottom:none;}
+    .adm-table tr:hover td{background:#fafbfc;}
+
+    .status-badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;
+      font-weight:700;padding:3px 9px;border-radius:20px;}
+    .status-on{background:#dcfce7;color:#16a34a;}
+    .status-off{background:#fee2e2;color:#dc2626;}
+
+    .btn-adm{border:none;border-radius:7px;padding:5px 12px;font-size:.73rem;
+      font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.17s;}
+    .btn-hide{background:#fef3c7;color:#d97706;} .btn-hide:hover{background:#fde68a;}
+    .btn-show{background:#dcfce7;color:#16a34a;} .btn-show:hover{background:#bbf7d0;}
+    .btn-del{background:#fee2e2;color:#dc2626;}  .btn-del:hover{background:#fecaca;}
+    .btn-edit{background:#e0f2fe;color:#0369a1;} .btn-edit:hover{background:#bae6fd;}
+    .btn-add{background:var(--navy);color:#fff;border:none;border-radius:9px;
+      padding:8px 18px;font-size:.8rem;font-weight:700;cursor:pointer;
+      display:inline-flex;align-items:center;gap:7px;transition:.17s;}
+    .btn-add:hover{background:#0ea5e9;}
+
+    /* Form modal */
+    .form-label{font-size:.78rem;font-weight:600;color:#334155;margin-bottom:4px;}
+    .form-control,.form-select{font-size:.82rem;border-radius:8px;border:1.5px solid #e2e8f0;}
+    .form-control:focus,.form-select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(0,45,93,.1);}
+
+    /* ── PLAYER ── */
+    #player-overlay{position:fixed;inset:0;background:#000;z-index:9999;display:none;flex-direction:column;}
+    #player-overlay.active{display:flex;}
+    .player-toolbar{height:50px;background:#111;display:flex;justify-content:space-between;
+      align-items:center;padding:0 16px;flex-shrink:0;border-bottom:1px solid #222;}
+    #player-frame{width:100%;flex:1;border:none;display:block;min-height:0;}
+    #blocker-tr{position:absolute;top:50px;right:0;width:52px;height:52px;background:#111;z-index:10000;pointer-events:all;}
+
+    /* ── FOOTER ── */
+    #app-footer{background:#fff;border-top:1px solid #e2e8f0;padding:13px 20px;
+      text-align:center;font-size:.7rem;color:var(--muted);margin-top:auto;}
+    #app-footer strong{color:var(--navy);}
+
+    /* Responsive table scroll */
+    .table-wrap{overflow-x:auto;}
   </style>
 </head>
 <body>
 
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sb-overlay" onclick="toggleSidebar()"></div>
 
-<!-- ══════ SIDEBAR ══════ -->
+<!-- ══════════ SIDEBAR ══════════ -->
 <div class="sidebar" id="sidebar">
-
-  <div class="sidebar-brand">
-    <div class="logo-pill">
-      <i class="fas fa-shield-virus" style="color:var(--gold);font-size:.75rem;"></i>
-      <span>FETP Indonesia</span>
-    </div>
+  <div class="sb-brand">
+    <div class="pill"><i class="fas fa-shield-virus" style="color:var(--gold);font-size:.72rem;"></i><span>FETP Indonesia</span></div>
     <h2>Public Health<br>Learning Center</h2>
     <p>Field Epidemiology Training Program</p>
   </div>
@@ -247,40 +240,49 @@
 
     <div class="nav-label" style="margin-top:6px;">Kurikulum</div>
     <div id="dynamic-menu">
-      <div style="padding:16px 18px;font-size:.78rem;color:#334155;">
-        <div class="spinner-ring" style="width:20px;height:20px;border-width:2px;margin:0 auto 6px;"></div>
-      </div>
+      <div style="padding:14px 18px;"><div class="spin" style="width:20px;height:20px;border-width:2px;margin:0 auto;"></div></div>
     </div>
 
     <div class="nav-label" style="margin-top:6px;">Ujian Online</div>
     <div class="nav-item" id="btn-cbt" onclick="openCBT()">
       <i class="fas fa-laptop-code"></i> Computer Based Test
-      <span class="nav-badge badge-gold">↗ CBT</span>
+      <span class="nbadge bg-gold">↗ CBT</span>
     </div>
 
     <div class="nav-label" style="margin-top:6px;">Analitik</div>
     <div class="nav-item" id="btn-stat" onclick="openStats()">
       <i class="fas fa-chart-bar"></i> Statistik Kunjungan
-      <span class="nav-badge badge-sky">Live</span>
+      <span class="nbadge bg-sky">Live</span>
+    </div>
+
+    <!-- Admin menu (hidden by default) -->
+    <div id="admin-menu-section" style="display:none;">
+      <div class="nav-label" style="margin-top:6px;">Admin</div>
+      <div class="nav-item" id="btn-admin" onclick="openAdmin()">
+        <i class="fas fa-cog"></i> Kelola Konten
+        <span class="nbadge bg-red">ADM</span>
+      </div>
+      <div class="nav-item" onclick="doLogout()" style="color:#f87171;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </div>
     </div>
   </nav>
 
-  <div class="sidebar-footer">
-    <button class="btn btn-outline-secondary btn-sm w-100" style="font-size:.75rem;font-weight:600;" onclick="loginModal.show()">
-      <i class="fas fa-lock me-1"></i> LOGIN ADMIN
+  <div class="sb-footer">
+    <button class="btn btn-outline-secondary btn-sm w-100" id="login-btn"
+      style="font-size:.74rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;"
+      onclick="openLoginModal()">
+      <i class="fas fa-lock"></i> LOGIN ADMIN
     </button>
   </div>
 </div>
 
-<!-- ══════ MAIN CONTENT ══════ -->
+<!-- ══════════ MAIN CONTENT ══════════ -->
 <div class="main-content">
 
-  <!-- Mobile navbar -->
-  <nav class="navbar navbar-dark d-lg-none px-3 sticky-top" style="background:var(--navy);min-height:48px;">
-    <button class="navbar-toggler border-0 p-1" onclick="toggleSidebar()">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <span class="navbar-brand mb-0 h1" style="font-size:.9rem;font-weight:700;">Portal Akademik</span>
+  <nav class="navbar navbar-dark d-lg-none px-3 sticky-top" style="background:var(--navy);min-height:46px;">
+    <button class="navbar-toggler border-0 p-1" onclick="toggleSidebar()"><span class="navbar-toggler-icon"></span></button>
+    <span class="navbar-brand mb-0 h1" style="font-size:.88rem;font-weight:700;">Portal Akademik</span>
   </nav>
 
   <!-- Hero -->
@@ -290,10 +292,10 @@
       <h1>Public Health<br><span>Learning Center</span></h1>
       <p class="hero-sub">Empowering critical and impactful epidemiologists<br>Learn · Analyze · Prevent</p>
       <div class="hero-author">
-        <div class="hero-author-dot">AM</div>
+        <div class="hero-dot">AM</div>
         <div>
-          <div class="hero-author-name">Ahmad Musyafa, SKM, MPH</div>
-          <div class="hero-author-role">Epidemiolog Kesehatan Ahli Madya · BKK Kelas I Samarinda</div>
+          <div class="hero-name">Ahmad Musyafa, SKM, MPH</div>
+          <div class="hero-role">Epidemiolog Kesehatan Ahli Madya · BKK Kelas I Samarinda</div>
         </div>
       </div>
     </div>
@@ -302,57 +304,109 @@
     </div>
   </div>
 
-  <!-- Normal Panel -->
+  <!-- ── NORMAL PANEL ── -->
   <div id="normal-panel" style="display:block;">
-
-    <!-- Breadcrumb (tersembunyi saat di home) -->
-    <div class="breadcrumb-bar" id="breadcrumb-bar" style="display:none;">
+    <div class="bc-bar" id="bc-bar" style="display:none;">
       <span class="crumb" onclick="openHome()"><i class="fas fa-home me-1"></i>Beranda</span>
       <span class="sep">›</span>
       <span id="bc-menu" class="crumb"></span>
       <span class="sep bc-mk-sep" style="display:none;">›</span>
-      <span id="bc-mk" class="current" style="display:none;"></span>
+      <span id="bc-mk" class="cur" style="display:none;"></span>
     </div>
-
-    <div class="panel-header">
-      <div class="panel-title">
-        <div class="title-icon"><i class="fas fa-layer-group"></i></div>
-        <span id="page-title">Selamat Datang</span>
-      </div>
+    <div class="panel-title">
+      <div class="ti"><i class="fas fa-layer-group"></i></div>
+      <span id="page-title">Selamat Datang</span>
     </div>
-
     <div id="content-area">
-      <!-- Diisi dinamis oleh JS -->
       <div class="state-box">
-        <div class="state-icon"><i class="fas fa-graduation-cap" style="color:var(--navy);opacity:1;font-size:3rem;"></i></div>
+        <div class="si"><i class="fas fa-graduation-cap" style="color:var(--navy);opacity:.9;font-size:3rem;"></i></div>
         <h5>Selamat Datang di Portal Akademik</h5>
         <p>Pilih kategori kurikulum di panel kiri<br>untuk mengakses bahan ajar dan materi perkuliahan.</p>
       </div>
     </div>
   </div>
 
-  <!-- Stats Panel -->
+  <!-- ── STATS PANEL ── -->
   <div id="stats-panel" style="display:none;">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
-        <h4 class="fw-bold m-0" style="color:#0f172a;">Statistik Kunjungan</h4>
-        <small class="text-muted">Rekap aktivitas pengguna portal</small>
+        <div class="panel-title" style="margin-bottom:2px;"><div class="ti"><i class="fas fa-chart-bar"></i></div>Statistik Portal</div>
+        <small class="text-muted" style="font-size:.74rem;">Ringkasan data kurikulum & materi</small>
       </div>
-      <button class="btn btn-sm btn-outline-primary fw-semibold" onclick="loadStats()">
-        <i class="fas fa-sync-alt me-1"></i> Refresh
+      <button class="btn btn-sm btn-outline-primary fw-semibold" onclick="loadStats()" style="font-size:.78rem;border-radius:8px;">
+        <i class="fas fa-sync-alt me-1"></i>Refresh
       </button>
     </div>
-
     <div class="row g-3 mb-4">
-      <div class="col-6 col-md-3"><div class="stat-card sc-blue"><div><div class="stat-num" id="sc-hari">—</div><div class="stat-lbl">Kunjungan Hari Ini</div></div><i class="fas fa-calendar-day stat-icon"></i></div></div>
-      <div class="col-6 col-md-3"><div class="stat-card sc-green"><div><div class="stat-num" id="sc-total">—</div><div class="stat-lbl">Total Kunjungan</div></div><i class="fas fa-users stat-icon"></i></div></div>
-      <div class="col-6 col-md-3"><div class="stat-card sc-orange"><div><div class="stat-num" id="sc-mk">—</div><div class="stat-lbl">Total Mata Kuliah</div></div><i class="fas fa-book stat-icon"></i></div></div>
-      <div class="col-6 col-md-3"><div class="stat-card sc-purple"><div><div class="stat-num" id="sc-materi">—</div><div class="stat-lbl">Total Materi</div></div><i class="fas fa-file-alt stat-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-blue"><div><div class="sn" id="sc-menu">—</div><div class="sl">Menu Utama</div></div><i class="fas fa-folder sico"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-green"><div><div class="sn" id="sc-mk">—</div><div class="sl">Mata Kuliah</div></div><i class="fas fa-book sico"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-orange"><div><div class="sn" id="sc-materi">—</div><div class="sl">Total Materi</div></div><i class="fas fa-file-alt sico"></i></div></div>
+      <div class="col-6 col-md-3"><div class="stat-card sc-purple"><div><div class="sn" id="sc-aktif">—</div><div class="sl">Materi Aktif</div></div><i class="fas fa-check-circle sico"></i></div></div>
+    </div>
+    <div class="stats-card">
+      <div style="font-size:.88rem;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <i class="fas fa-chart-bar" style="color:#0ea5e9;"></i> Distribusi Materi per Mata Kuliah
+      </div>
+      <div style="position:relative;height:250px;"><canvas id="grafik"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN PANEL ── -->
+  <div id="admin-panel" style="display:none;">
+    <div class="panel-title"><div class="ti"><i class="fas fa-cog"></i></div>Kelola Konten</div>
+
+    <div class="adm-tabs">
+      <div class="adm-tab active" onclick="switchAdmTab('menu')"><i class="fas fa-folder me-1"></i>Menu Utama</div>
+      <div class="adm-tab" onclick="switchAdmTab('mk')"><i class="fas fa-book me-1"></i>Mata Kuliah</div>
+      <div class="adm-tab" onclick="switchAdmTab('materi')"><i class="fas fa-file-alt me-1"></i>Materi</div>
     </div>
 
-    <div class="stats-card">
-      <div class="stats-card-title"><i class="fas fa-chart-bar" style="color:#0ea5e9;"></i> Distribusi Materi per Mata Kuliah</div>
-      <div style="position:relative;height:260px;"><canvas id="grafik-kunjungan"></canvas></div>
+    <!-- Tab: Menu Utama -->
+    <div id="adm-menu" class="adm-section">
+      <div class="adm-card">
+        <div class="adm-card-header">
+          <h6><i class="fas fa-folder me-1"></i>Daftar Menu Utama</h6>
+          <button class="btn-add" onclick="showFormMenu()"><i class="fas fa-plus"></i>Tambah Menu</button>
+        </div>
+        <div class="table-wrap">
+          <table class="adm-table">
+            <thead><tr><th>#</th><th>Nama Menu</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="tbl-menu"><tr><td colspan="4" class="text-center p-4"><div class="spin" style="margin:0 auto;"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Mata Kuliah -->
+    <div id="adm-mk" class="adm-section" style="display:none;">
+      <div class="adm-card">
+        <div class="adm-card-header">
+          <h6><i class="fas fa-book me-1"></i>Daftar Mata Kuliah</h6>
+          <button class="btn-add" onclick="showFormMK()"><i class="fas fa-plus"></i>Tambah Mata Kuliah</button>
+        </div>
+        <div class="table-wrap">
+          <table class="adm-table">
+            <thead><tr><th>#</th><th>Nama MK</th><th>Menu Utama</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="tbl-mk"><tr><td colspan="5" class="text-center p-4"><div class="spin" style="margin:0 auto;"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Materi -->
+    <div id="adm-materi" class="adm-section" style="display:none;">
+      <div class="adm-card">
+        <div class="adm-card-header">
+          <h6><i class="fas fa-file-alt me-1"></i>Daftar Materi</h6>
+          <button class="btn-add" onclick="showFormMateri()"><i class="fas fa-plus"></i>Tambah Materi</button>
+        </div>
+        <div class="table-wrap">
+          <table class="adm-table">
+            <thead><tr><th>#</th><th>Judul</th><th>Mata Kuliah</th><th>Link</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody id="tbl-materi"><tr><td colspan="6" class="text-center p-4"><div class="spin" style="margin:0 auto;"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -362,39 +416,83 @@
   </footer>
 </div>
 
-<!-- ══════ PLAYER OVERLAY ══════ -->
+<!-- ══════════ PLAYER ══════════ -->
 <div id="player-overlay">
   <div class="player-toolbar">
     <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-danger btn-sm px-3 fw-bold" onclick="closePlayer()">
-        <i class="fas fa-times me-1"></i> Tutup
-      </button>
-      <button class="btn btn-secondary btn-sm px-3 fw-bold" onclick="toggleFullScreen()">
-        <i class="fas fa-expand me-1"></i> Layar Penuh
-      </button>
+      <button class="btn btn-danger btn-sm px-3 fw-bold" onclick="closePlayer()"><i class="fas fa-times me-1"></i>Tutup</button>
+      <button class="btn btn-secondary btn-sm px-3 fw-bold" onclick="toggleFS()"><i class="fas fa-expand me-1"></i>Layar Penuh</button>
     </div>
-    <span class="text-white" style="font-size:.75rem;opacity:.6;">Ruang Kelas Digital · FETP Indonesia</span>
+    <span class="text-white" style="font-size:.72rem;opacity:.55;">Ruang Kelas Digital · FETP Indonesia</span>
   </div>
   <iframe id="player-frame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
   <div id="blocker-tr"></div>
 </div>
 
-<!-- ══════ LOGIN MODAL ══════ -->
+<!-- ══════════ MODAL LOGIN ══════════ -->
 <div class="modal fade" id="loginModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content p-4 border-0 shadow-lg" style="border-radius:16px;">
-      <div class="text-center mb-3">
-        <div style="width:44px;height:44px;background:rgba(0,45,93,.08);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
-          <i class="fas fa-lock" style="color:var(--navy);"></i>
+    <div class="modal-content border-0 shadow-lg" style="border-radius:16px;overflow:hidden;">
+      <div style="background:var(--navy);padding:22px 24px 16px;text-align:center;">
+        <div style="width:42px;height:42px;background:rgba(197,160,89,.18);border:1px solid rgba(197,160,89,.35);border-radius:11px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <i class="fas fa-lock" style="color:var(--gold);"></i>
         </div>
-        <h5 class="fw-bold m-0">Login Admin</h5>
-        <small class="text-muted">Portal Manajemen Akademik</small>
+        <h5 class="fw-bold m-0" style="color:#fff;font-size:.95rem;">Login Admin</h5>
+        <small style="color:rgba(255,255,255,.45);font-size:.7rem;">Portal Manajemen Akademik</small>
       </div>
-      <input type="text" id="inp-user" class="form-control mb-2" placeholder="Username" style="border-radius:8px;">
-      <input type="password" id="inp-pass" class="form-control mb-3" placeholder="Password" style="border-radius:8px;">
-      <button class="btn btn-dark w-100 fw-bold py-2" style="border-radius:8px;" onclick="doLogin()">
-        MASUK <i class="fas fa-arrow-right ms-1"></i>
-      </button>
+      <div class="p-4">
+        <div class="mb-2">
+          <label class="form-label">Username</label>
+          <input type="text" id="inp-user" class="form-control" placeholder="admin">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input type="password" id="inp-pass" class="form-control" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div id="login-err" class="text-danger mb-2" style="font-size:.76rem;display:none;"></div>
+        <button class="btn btn-dark w-100 fw-bold py-2" style="border-radius:8px;" onclick="doLogin()">
+          MASUK <i class="fas fa-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL FORM ══════════ -->
+<div class="modal fade" id="formModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius:14px;">
+      <div class="modal-header" style="border-bottom:1px solid #f1f5f9;padding:16px 20px;">
+        <h6 class="modal-title fw-bold" id="form-modal-title" style="color:var(--navy);"></h6>
+        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4" id="form-modal-body"></div>
+      <div class="modal-footer" style="border-top:1px solid #f1f5f9;padding:12px 20px;gap:8px;">
+        <button class="btn btn-light btn-sm fw-semibold" data-bs-dismiss="modal" style="border-radius:8px;">Batal</button>
+        <button class="btn btn-dark btn-sm fw-bold px-4" style="border-radius:8px;" onclick="submitForm()">
+          <i class="fas fa-save me-1"></i>Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODAL KONFIRMASI ══════════ -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
+      <div style="background:#fee2e2;padding:20px;text-align:center;">
+        <i class="fas fa-exclamation-triangle" style="color:#dc2626;font-size:2rem;"></i>
+      </div>
+      <div class="p-4 text-center">
+        <h6 class="fw-bold mb-2" id="confirm-title">Konfirmasi Hapus</h6>
+        <p class="text-muted mb-4" style="font-size:.8rem;" id="confirm-msg">Yakin ingin menghapus item ini?</p>
+        <div class="d-flex gap-2">
+          <button class="btn btn-light btn-sm fw-semibold flex-fill" style="border-radius:8px;" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-danger btn-sm fw-bold flex-fill" style="border-radius:8px;" id="confirm-ok">Ya, Hapus</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -402,374 +500,575 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ══════════════════════════════════════════════
-//  KONFIGURASI SUPABASE
-//  ⚠️ Ganti SUPABASE_ANON_KEY dengan key lengkap dari Project Settings > API
+//  KONFIGURASI — ganti KEY dengan anon key lengkap dari Supabase
 // ══════════════════════════════════════════════
-const SUPABASE_URL      = "https://dcsodanljmffoapavnzg.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_ekjj3GUKRSgauuFCVn_QjA_0psooypA";
-// Key valid berbentuk JWT panjang, contoh:
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjc29k...
+const SUPABASE_URL  = "https://dcsodanljmffoapavnzg.supabase.co";
+const SUPABASE_KEY  = "GANTI_DENGAN_ANON_KEY_LENGKAP";
+// Ambil dari: Supabase > Project Settings > API > anon public
+// Bentuknya JWT panjang: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const CBT_URL = 'https://script.google.com/macros/s/AKfycby4I0CXbQ4idFPOjSs_ZISp4DBFzeCKG3thzY8ZrQEf0CWzBPN9385xD_289xXevm0V/exec';
 
-let loginModal, grafikChart = null;
+// ── Admin credentials (ganti sesuai kebutuhan) ──
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "fetp2024";
+
+// ── State ──
+let isAdmin = false;
+let loginModalInst, formModalInst, confirmModalInst;
+let grafikChart = null;
+let currentForm = null; // {type, id}
+let _bcMenuId = null, _bcMenuName = null;
 
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
-window.onload = function () {
-  loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+window.onload = async function () {
+  loginModalInst  = new bootstrap.Modal(document.getElementById('loginModal'));
+  formModalInst   = new bootstrap.Modal(document.getElementById('formModal'));
+  confirmModalInst= new bootstrap.Modal(document.getElementById('confirmModal'));
   document.getElementById('footer-year').innerText = new Date().getFullYear();
-  loadSidebar();
+
+  // Cek session admin
+  const saved = sessionStorage.getItem('fetp_admin');
+  if (saved === 'true') setAdminMode(true, false);
+
+  await loadSidebar();
   openHome();
 };
 
 // ══════════════════════════════════════════════
-//  1. LOAD SIDEBAR — dari tabel 'menu_utama'
+//  AUTH
+// ══════════════════════════════════════════════
+function openLoginModal() {
+  document.getElementById('login-err').style.display = 'none';
+  loginModalInst.show();
+  setTimeout(() => document.getElementById('inp-user').focus(), 400);
+}
+
+function doLogin() {
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value;
+  const err = document.getElementById('login-err');
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    sessionStorage.setItem('fetp_admin', 'true');
+    loginModalInst.hide();
+    setAdminMode(true, true);
+  } else {
+    err.style.display = 'block';
+    err.innerText = 'Username atau password salah.';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('fetp_admin');
+  setAdminMode(false, false);
+  openHome();
+}
+
+function setAdminMode(active, reload) {
+  isAdmin = active;
+  document.getElementById('admin-menu-section').style.display = active ? 'block' : 'none';
+  document.getElementById('login-btn').style.display = active ? 'none' : 'flex';
+  if (reload) loadSidebar();
+}
+
+// ══════════════════════════════════════════════
+//  SIDEBAR — menu_utama
 // ══════════════════════════════════════════════
 async function loadSidebar() {
-  const container = document.getElementById('dynamic-menu');
+  const el = document.getElementById('dynamic-menu');
   try {
-    const { data, error } = await db
-      .from('menu_utama')
-      .select('id, nama_menu')
-      .order('nama_menu', { ascending: true });
-
+    let q = db.from('menu_utama').select('id,nama_menu,is_active').order('nama_menu');
+    if (!isAdmin) q = q.eq('is_active', true);
+    const { data, error } = await q;
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      container.innerHTML = '<div style="padding:10px 18px;font-size:.78rem;color:#334155;">Belum ada kurikulum.</div>';
+      el.innerHTML = '<div style="padding:10px 18px;font-size:.77rem;color:#334155;">Belum ada kurikulum.</div>';
       return;
     }
-
-    container.innerHTML = data.map(m => `
-      <div class="nav-item" id="menu-${m.id}"
-           onclick="selectMenu(this, '${m.id}', '${escHtml(m.nama_menu)}')">
-        <i class="fas fa-folder-open"></i> ${escHtml(m.nama_menu)}
-      </div>
-    `).join('');
-
-  } catch (err) {
-    console.error('loadSidebar:', err.message);
-    container.innerHTML = '<div style="padding:10px 18px;font-size:.78rem;color:#ef4444;"><i class="fas fa-exclamation-circle me-1"></i>Gagal memuat menu.</div>';
+    el.innerHTML = data.map(m => `
+      <div class="nav-item ${!m.is_active ? 'opacity-50' : ''}" id="menu-${m.id}"
+           onclick="selectMenu(this,'${m.id}','${escH(m.nama_menu)}')">
+        <i class="fas fa-folder-open"></i> ${escH(m.nama_menu)}
+        ${!m.is_active ? '<span class="nbadge" style="background:#334155;color:#94a3b8;margin-left:auto;">Tersembunyi</span>' : ''}
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="padding:10px 18px;font-size:.77rem;color:#ef4444;"><i class="fas fa-exclamation-circle me-1"></i>Gagal memuat menu.</div>';
   }
 }
 
 // ══════════════════════════════════════════════
-//  2. PILIH MENU — tampilkan daftar Mata Kuliah
-//     dari tabel 'mata_kuliah' (filter menu_utama_id)
+//  PUBLIC FLOW
 // ══════════════════════════════════════════════
 async function selectMenu(el, menuId, menuName) {
-  clearActiveNav();
-  el.classList.add('active');
-
+  clearNav(); el.classList.add('active');
   showPanel('normal');
   setTitle(menuName, 'folder-open');
   setBreadcrumb(menuName, null, menuId);
-
-  const area = document.getElementById('content-area');
-  area.innerHTML = loadingHTML();
-
+  setLoading();
   try {
-    const { data, error } = await db
-      .from('mata_kuliah')
-      .select('id, nama_mk')
-      .eq('menu_utama_id', menuId)
-      .order('nama_mk', { ascending: true });
-
+    let q = db.from('mata_kuliah').select('id,nama_mk,is_active').eq('menu_utama_id', menuId).order('nama_mk');
+    if (!isAdmin) q = q.eq('is_active', true);
+    const { data, error } = await q;
     if (error) throw error;
-    renderMataKuliah(data, menuName, menuId);
-
-  } catch (err) {
-    console.error('selectMenu:', err.message);
-    area.innerHTML = errorHTML('Gagal memuat mata kuliah. Periksa koneksi Supabase.');
-  }
+    renderMK(data, menuName, menuId);
+  } catch (e) { setError('Gagal memuat mata kuliah. ' + e.message); }
 }
 
-// ══════════════════════════════════════════════
-//  3. RENDER KARTU MATA KULIAH
-// ══════════════════════════════════════════════
-function renderMataKuliah(list, menuName, menuId) {
+function renderMK(list, menuName, menuId) {
   const area = document.getElementById('content-area');
-
-  if (!list || list.length === 0) {
-    area.innerHTML = emptyHTML('Belum Ada Mata Kuliah', 'Belum ada mata kuliah di kategori ini.');
-    return;
-  }
-
-  area.innerHTML = `<div class="row g-3">
-    ${list.map(mk => `
-      <div class="col-12 col-sm-6 col-lg-4">
-        <div class="card-mk" onclick="selectMataKuliah('${mk.id}', '${escHtml(mk.nama_mk)}', '${escHtml(menuName)}', '${menuId}')">
-          <div class="card-mk-body">
-            <div class="card-mk-icon"><i class="fas fa-book-open"></i></div>
-            <h5>${escHtml(mk.nama_mk)}</h5>
-            <p>Klik untuk melihat daftar modul dan bahan ajar tersedia.</p>
-          </div>
-          <div class="card-mk-footer">
-            <span class="count"><i class="fas fa-layer-group me-1"></i>Lihat materi</span>
-            <button class="btn-buka"><i class="fas fa-chevron-right"></i> Buka</button>
-          </div>
+  if (!list || list.length === 0) { area.innerHTML = emptyHTML('Belum Ada Mata Kuliah', 'Belum ada mata kuliah di kategori ini.'); return; }
+  area.innerHTML = `<div class="row g-3">${list.map(mk => `
+    <div class="col-12 col-sm-6 col-lg-4">
+      <div class="card-mk ${!mk.is_active ? 'opacity-50' : ''}"
+           onclick="selectMK('${mk.id}','${escH(mk.nama_mk)}','${escH(menuName)}','${menuId}')">
+        <div class="card-mk-body">
+          <div class="mk-icon"><i class="fas fa-book-open"></i></div>
+          <h5>${escH(mk.nama_mk)}</h5>
+          <p>Klik untuk melihat daftar modul dan bahan ajar tersedia.</p>
+          ${!mk.is_active ? '<span class="status-badge status-off"><i class="fas fa-eye-slash"></i> Tersembunyi</span>' : ''}
+        </div>
+        <div class="card-mk-foot">
+          <span class="cnt"><i class="fas fa-layer-group me-1"></i>Lihat materi</span>
+          <button class="btn-buka"><i class="fas fa-chevron-right"></i> Buka</button>
         </div>
       </div>
-    `).join('')}
-  </div>`;
+    </div>`).join('')}</div>`;
 }
 
-// ══════════════════════════════════════════════
-//  4. PILIH MATA KULIAH — tampilkan daftar Materi
-//     dari tabel 'materi' (filter mata_kuliah_id)
-// ══════════════════════════════════════════════
-async function selectMataKuliah(mkId, mkName, menuName, menuId) {
+async function selectMK(mkId, mkName, menuName, menuId) {
   showPanel('normal');
   setTitle(mkName, 'book-open');
   setBreadcrumb(menuName, mkName, menuId);
-
-  const area = document.getElementById('content-area');
-  area.innerHTML = loadingHTML();
-
+  setLoading();
   try {
-    const { data, error } = await db
-      .from('materi')
-      .select('id, judul, deskripsi, link_drive')
-      .eq('mata_kuliah_id', mkId)
-      .order('id', { ascending: true });
-
+    let q = db.from('materi').select('id,judul,deskripsi,link_drive,is_active').eq('mata_kuliah_id', mkId).order('id');
+    if (!isAdmin) q = q.eq('is_active', true);
+    const { data, error } = await q;
     if (error) throw error;
-    renderMateri(data, mkName, mkId, menuName, menuId);
-
-  } catch (err) {
-    console.error('selectMataKuliah:', err.message);
-    area.innerHTML = errorHTML('Gagal memuat materi. Periksa koneksi Supabase.');
-  }
+    renderMateri(data, mkName);
+  } catch (e) { setError('Gagal memuat materi. ' + e.message); }
 }
 
-// ══════════════════════════════════════════════
-//  5. RENDER DAFTAR MATERI
-// ══════════════════════════════════════════════
-function renderMateri(list, mkName, mkId, menuName, menuId) {
+function renderMateri(list, mkName) {
   const area = document.getElementById('content-area');
-
-  if (!list || list.length === 0) {
-    area.innerHTML = emptyHTML('Belum Ada Materi', `Belum ada modul yang diunggah untuk mata kuliah <strong>${escHtml(mkName)}</strong>.`);
-    return;
-  }
-
-  area.innerHTML = `
-    <div class="d-flex flex-column gap-3">
-      ${list.map((m, i) => `
-        <div class="materi-item">
-          <div class="materi-num">${String(i + 1).padStart(2, '0')}</div>
-          <div class="materi-info">
-            <h6>${escHtml(m.judul)}</h6>
-            <p>${escHtml(m.deskripsi || 'Klik tombol untuk membuka materi.')}</p>
-          </div>
-          <button class="btn-play" onclick="play('${escAttr(m.link_drive)}')">
-            <i class="fas fa-play-circle"></i> Buka
-          </button>
-        </div>
-      `).join('')}
+  if (!list || list.length === 0) { area.innerHTML = emptyHTML('Belum Ada Materi', `Belum ada modul untuk <strong>${escH(mkName)}</strong>.`); return; }
+  let n = 0;
+  area.innerHTML = `<div class="d-flex flex-column gap-3">${list.map(m => {
+    if (m.is_active || isAdmin) n++;
+    return `<div class="materi-item ${!m.is_active ? 'opacity-50' : ''}">
+      <div class="mat-num">${String(n).padStart(2,'0')}</div>
+      <div class="mat-info">
+        <h6>${escH(m.judul)} ${!m.is_active ? '<span class="status-badge status-off ms-1"><i class="fas fa-eye-slash"></i> Tersembunyi</span>' : ''}</h6>
+        <p>${escH(m.deskripsi || 'Klik tombol untuk membuka materi.')}</p>
+      </div>
+      <button class="btn-play" onclick="play('${escA(m.link_drive)}')">
+        <i class="fas fa-play-circle"></i> Buka
+      </button>
     </div>`;
+  }).join('')}</div>`;
 }
 
 // ══════════════════════════════════════════════
-//  6. PLAYER
+//  ADMIN PANEL
+// ══════════════════════════════════════════════
+function openAdmin() {
+  if (!isAdmin) return;
+  clearNav();
+  document.getElementById('btn-admin').classList.add('active');
+  showPanel('admin');
+  if (window.innerWidth < 992) toggleSidebar();
+  switchAdmTab('menu');
+}
+
+let admCurrentTab = 'menu';
+function switchAdmTab(tab) {
+  admCurrentTab = tab;
+  document.querySelectorAll('.adm-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['menu','mk','materi'][i] === tab);
+  });
+  document.querySelectorAll('.adm-section').forEach(s => s.style.display = 'none');
+  document.getElementById('adm-' + tab).style.display = 'block';
+  if (tab === 'menu')   loadAdmMenu();
+  if (tab === 'mk')     loadAdmMK();
+  if (tab === 'materi') loadAdmMateri();
+}
+
+// ── Load Admin Tables ──
+async function loadAdmMenu() {
+  const tbody = document.getElementById('tbl-menu');
+  tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4"><div class="spin" style="margin:0 auto;"></div></td></tr>';
+  const { data, error } = await db.from('menu_utama').select('*').order('nama_menu');
+  if (error) { tbody.innerHTML = `<tr><td colspan="4" class="text-danger p-3">${error.message}</td></tr>`; return; }
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-muted">Belum ada data.</td></tr>'; return; }
+  tbody.innerHTML = data.map((r,i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:.75rem;">${i+1}</td>
+      <td><strong style="color:var(--navy);font-size:.82rem;">${escH(r.nama_menu)}</strong></td>
+      <td>${statusBadge(r.is_active)}</td>
+      <td>
+        <div class="d-flex gap-1 flex-wrap">
+          <button class="btn-adm btn-edit" onclick="showFormMenu(${JSON.stringify(r).replace(/'/g,'&#39;')})"><i class="fas fa-pen"></i> Edit</button>
+          ${r.is_active
+            ? `<button class="btn-adm btn-hide" onclick="toggleStatus('menu_utama','${r.id}',false)"><i class="fas fa-eye-slash"></i> Sembunyikan</button>`
+            : `<button class="btn-adm btn-show" onclick="toggleStatus('menu_utama','${r.id}',true)"><i class="fas fa-eye"></i> Tampilkan</button>`}
+          <button class="btn-adm btn-del" onclick="confirmDelete('menu_utama','${r.id}','${escH(r.nama_menu)}')"><i class="fas fa-trash"></i> Hapus</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadAdmMK() {
+  const tbody = document.getElementById('tbl-mk');
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4"><div class="spin" style="margin:0 auto;"></div></td></tr>';
+  const [rMK, rMenu] = await Promise.all([
+    db.from('mata_kuliah').select('*').order('nama_mk'),
+    db.from('menu_utama').select('id,nama_menu')
+  ]);
+  if (rMK.error) { tbody.innerHTML = `<tr><td colspan="5" class="text-danger p-3">${rMK.error.message}</td></tr>`; return; }
+  const menuMap = {};
+  (rMenu.data||[]).forEach(m => menuMap[m.id] = m.nama_menu);
+  if (!rMK.data.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">Belum ada data.</td></tr>'; return; }
+  tbody.innerHTML = rMK.data.map((r,i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:.75rem;">${i+1}</td>
+      <td><strong style="color:var(--navy);font-size:.82rem;">${escH(r.nama_mk)}</strong></td>
+      <td style="font-size:.78rem;color:var(--muted);">${escH(menuMap[r.menu_utama_id]||'—')}</td>
+      <td>${statusBadge(r.is_active)}</td>
+      <td>
+        <div class="d-flex gap-1 flex-wrap">
+          <button class="btn-adm btn-edit" onclick='showFormMK(${safeJson(r)})'><i class="fas fa-pen"></i> Edit</button>
+          ${r.is_active
+            ? `<button class="btn-adm btn-hide" onclick="toggleStatus('mata_kuliah','${r.id}',false)"><i class="fas fa-eye-slash"></i> Sembunyikan</button>`
+            : `<button class="btn-adm btn-show" onclick="toggleStatus('mata_kuliah','${r.id}',true)"><i class="fas fa-eye"></i> Tampilkan</button>`}
+          <button class="btn-adm btn-del" onclick="confirmDelete('mata_kuliah','${r.id}','${escH(r.nama_mk)}')"><i class="fas fa-trash"></i> Hapus</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function loadAdmMateri() {
+  const tbody = document.getElementById('tbl-materi');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4"><div class="spin" style="margin:0 auto;"></div></td></tr>';
+  const [rM, rMK] = await Promise.all([
+    db.from('materi').select('*').order('id'),
+    db.from('mata_kuliah').select('id,nama_mk')
+  ]);
+  if (rM.error) { tbody.innerHTML = `<tr><td colspan="6" class="text-danger p-3">${rM.error.message}</td></tr>`; return; }
+  const mkMap = {};
+  (rMK.data||[]).forEach(m => mkMap[m.id] = m.nama_mk);
+  if (!rM.data.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-muted">Belum ada data.</td></tr>'; return; }
+  tbody.innerHTML = rM.data.map((r,i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:.75rem;">${i+1}</td>
+      <td><strong style="color:var(--navy);font-size:.82rem;">${escH(r.judul)}</strong><br><span style="font-size:.7rem;color:var(--muted);">${escH(r.deskripsi||'')}</span></td>
+      <td style="font-size:.78rem;color:var(--muted);">${escH(mkMap[r.mata_kuliah_id]||'—')}</td>
+      <td style="font-size:.72rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${r.link_drive ? `<a href="${escH(r.link_drive)}" target="_blank" style="color:#0ea5e9;font-size:.72rem;">Buka Link ↗</a>` : '<span style="color:var(--muted);">—</span>'}
+      </td>
+      <td>${statusBadge(r.is_active)}</td>
+      <td>
+        <div class="d-flex gap-1 flex-wrap">
+          <button class="btn-adm btn-edit" onclick='showFormMateri(${safeJson(r)})'><i class="fas fa-pen"></i> Edit</button>
+          ${r.is_active
+            ? `<button class="btn-adm btn-hide" onclick="toggleStatus('materi','${r.id}',false)"><i class="fas fa-eye-slash"></i> Sembunyikan</button>`
+            : `<button class="btn-adm btn-show" onclick="toggleStatus('materi','${r.id}',true)"><i class="fas fa-eye"></i> Tampilkan</button>`}
+          <button class="btn-adm btn-del" onclick="confirmDelete('materi','${r.id}','${escH(r.judul)}')"><i class="fas fa-trash"></i> Hapus</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ── Toggle Visibility ──
+async function toggleStatus(tabel, id, aktif) {
+  await db.from(tabel).update({ is_active: aktif }).eq('id', id);
+  loadSidebar();
+  if (admCurrentTab === 'menu')   loadAdmMenu();
+  if (admCurrentTab === 'mk')     loadAdmMK();
+  if (admCurrentTab === 'materi') loadAdmMateri();
+}
+
+// ── Delete ──
+function confirmDelete(tabel, id, nama) {
+  document.getElementById('confirm-msg').innerHTML = `Yakin ingin menghapus <strong>"${escH(nama)}"</strong>?<br><small class="text-muted">Tindakan ini tidak dapat dibatalkan.</small>`;
+  confirmModalInst.show();
+  document.getElementById('confirm-ok').onclick = async () => {
+    await db.from(tabel).delete().eq('id', id);
+    confirmModalInst.hide();
+    loadSidebar();
+    if (admCurrentTab === 'menu')   loadAdmMenu();
+    if (admCurrentTab === 'mk')     loadAdmMK();
+    if (admCurrentTab === 'materi') loadAdmMateri();
+  };
+}
+
+// ── Form: Menu Utama ──
+function showFormMenu(row) {
+  currentForm = { type: 'menu', id: row ? row.id : null };
+  document.getElementById('form-modal-title').innerHTML = row
+    ? '<i class="fas fa-pen me-1"></i>Edit Menu Utama'
+    : '<i class="fas fa-plus me-1"></i>Tambah Menu Utama';
+  document.getElementById('form-modal-body').innerHTML = `
+    <div class="mb-3">
+      <label class="form-label">Nama Menu <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" id="f-nama-menu" value="${escH(row?.nama_menu||'')}" placeholder="cth: Dasar Epidemiologi">
+    </div>`;
+  formModalInst.show();
+  setTimeout(() => document.getElementById('f-nama-menu').focus(), 300);
+}
+
+// ── Form: Mata Kuliah ──
+async function showFormMK(row) {
+  currentForm = { type: 'mk', id: row ? row.id : null };
+  document.getElementById('form-modal-title').innerHTML = row
+    ? '<i class="fas fa-pen me-1"></i>Edit Mata Kuliah'
+    : '<i class="fas fa-plus me-1"></i>Tambah Mata Kuliah';
+  const { data: menus } = await db.from('menu_utama').select('id,nama_menu').order('nama_menu');
+  document.getElementById('form-modal-body').innerHTML = `
+    <div class="mb-3">
+      <label class="form-label">Nama Mata Kuliah <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" id="f-nama-mk" value="${escH(row?.nama_mk||'')}" placeholder="cth: Epidemiologi Deskriptif">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Menu Utama <span class="text-danger">*</span></label>
+      <select class="form-select" id="f-menu-id">
+        <option value="">— Pilih Menu —</option>
+        ${(menus||[]).map(m => `<option value="${m.id}" ${row?.menu_utama_id==m.id?'selected':''}>${escH(m.nama_menu)}</option>`).join('')}
+      </select>
+    </div>`;
+  formModalInst.show();
+}
+
+// ── Form: Materi ──
+async function showFormMateri(row) {
+  currentForm = { type: 'materi', id: row ? row.id : null };
+  document.getElementById('form-modal-title').innerHTML = row
+    ? '<i class="fas fa-pen me-1"></i>Edit Materi'
+    : '<i class="fas fa-plus me-1"></i>Tambah Materi';
+  const { data: mks } = await db.from('mata_kuliah').select('id,nama_mk').order('nama_mk');
+  document.getElementById('form-modal-body').innerHTML = `
+    <div class="mb-3">
+      <label class="form-label">Judul Materi <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" id="f-judul" value="${escH(row?.judul||'')}" placeholder="cth: Pengantar Epidemiologi Deskriptif">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Mata Kuliah <span class="text-danger">*</span></label>
+      <select class="form-select" id="f-mk-id">
+        <option value="">— Pilih Mata Kuliah —</option>
+        ${(mks||[]).map(m => `<option value="${m.id}" ${row?.mata_kuliah_id==m.id?'selected':''}>${escH(m.nama_mk)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Deskripsi</label>
+      <input type="text" class="form-control" id="f-deskripsi" value="${escH(row?.deskripsi||'')}" placeholder="Opsional">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Link Google Drive / Slides <span class="text-danger">*</span></label>
+      <input type="url" class="form-control" id="f-link" value="${escH(row?.link_drive||'')}" placeholder="https://drive.google.com/...">
+      <div class="form-text" style="font-size:.72rem;">Pastikan link sudah diatur "Anyone with link can view"</div>
+    </div>`;
+  formModalInst.show();
+}
+
+// ── Submit Form ──
+async function submitForm() {
+  if (!currentForm) return;
+  const { type, id } = currentForm;
+  let payload = {}, tabel = '', valid = true;
+
+  if (type === 'menu') {
+    const v = document.getElementById('f-nama-menu').value.trim();
+    if (!v) { alert('Nama menu wajib diisi.'); valid = false; }
+    payload = { nama_menu: v };
+    tabel = 'menu_utama';
+  }
+  if (type === 'mk') {
+    const v1 = document.getElementById('f-nama-mk').value.trim();
+    const v2 = document.getElementById('f-menu-id').value;
+    if (!v1 || !v2) { alert('Nama mata kuliah dan menu wajib dipilih.'); valid = false; }
+    payload = { nama_mk: v1, menu_utama_id: v2 };
+    tabel = 'mata_kuliah';
+  }
+  if (type === 'materi') {
+    const v1 = document.getElementById('f-judul').value.trim();
+    const v2 = document.getElementById('f-mk-id').value;
+    const v3 = document.getElementById('f-link').value.trim();
+    if (!v1 || !v2 || !v3) { alert('Judul, mata kuliah, dan link wajib diisi.'); valid = false; }
+    payload = { judul: v1, mata_kuliah_id: v2, deskripsi: document.getElementById('f-deskripsi').value.trim(), link_drive: v3 };
+    tabel = 'materi';
+  }
+
+  if (!valid) return;
+
+  let err;
+  if (id) {
+    const r = await db.from(tabel).update(payload).eq('id', id);
+    err = r.error;
+  } else {
+    payload.is_active = true;
+    const r = await db.from(tabel).insert(payload);
+    err = r.error;
+  }
+
+  if (err) { alert('Gagal menyimpan: ' + err.message); return; }
+  formModalInst.hide();
+  loadSidebar();
+  if (admCurrentTab === 'menu')   loadAdmMenu();
+  if (admCurrentTab === 'mk')     loadAdmMK();
+  if (admCurrentTab === 'materi') loadAdmMateri();
+}
+
+// ══════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const [rMenu, rMK, rM] = await Promise.all([
+      db.from('menu_utama').select('id', { count: 'exact' }),
+      db.from('mata_kuliah').select('id,nama_mk', { count: 'exact' }),
+      db.from('materi').select('id,mata_kuliah_id,is_active', { count: 'exact' })
+    ]);
+    document.getElementById('sc-menu').innerText   = rMenu.count  || 0;
+    document.getElementById('sc-mk').innerText     = rMK.count    || 0;
+    document.getElementById('sc-materi').innerText = rM.count     || 0;
+    document.getElementById('sc-aktif').innerText  = (rM.data||[]).filter(x => x.is_active).length;
+
+    const mkMap = {};
+    (rMK.data||[]).forEach(m => mkMap[m.id] = m.nama_mk);
+    const cnt = {};
+    (rM.data||[]).forEach(m => cnt[m.mata_kuliah_id] = (cnt[m.mata_kuliah_id]||0)+1);
+
+    const labels = Object.keys(cnt).map(id => (mkMap[id]||`MK#${id}`).slice(0,20));
+    const values = Object.values(cnt);
+
+    const ctx = document.getElementById('grafik');
+    if (!ctx) return;
+    if (grafikChart) grafikChart.destroy();
+    grafikChart = new Chart(ctx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: 'Materi', data: values,
+          backgroundColor: 'rgba(0,45,93,0.72)', borderRadius: 7, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+  } catch (e) { console.error(e); }
+}
+
+// ══════════════════════════════════════════════
+//  PLAYER
 // ══════════════════════════════════════════════
 function play(url) {
-  if (!url || url.trim() === '') {
-    alert('Link materi belum tersedia.');
-    return;
-  }
+  if (!url || !url.trim()) { alert('Link materi belum tersedia.'); return; }
   document.getElementById('player-overlay').classList.add('active');
   document.getElementById('player-frame').src = url;
   document.body.style.overflow = 'hidden';
 }
-
 function closePlayer() {
   document.getElementById('player-overlay').classList.remove('active');
   document.getElementById('player-frame').src = '';
   document.body.style.overflow = 'auto';
 }
-
-function toggleFullScreen() {
+function toggleFS() {
   const el = document.getElementById('player-overlay');
-  if (document.fullscreenElement) document.exitFullscreen();
-  else el.requestFullscreen();
-}
-
-// ══════════════════════════════════════════════
-//  7. STATISTIK
-// ══════════════════════════════════════════════
-async function loadStats() {
-  // Hitung dari Supabase langsung
-  try {
-    const [rMK, rMateri] = await Promise.all([
-      db.from('mata_kuliah').select('id, nama_mk', { count: 'exact' }),
-      db.from('materi').select('id, mata_kuliah_id', { count: 'exact' })
-    ]);
-
-    const totalMK     = rMK.count || 0;
-    const totalMateri = rMateri.count || 0;
-
-    document.getElementById('sc-mk').innerText     = totalMK;
-    document.getElementById('sc-materi').innerText = totalMateri;
-    document.getElementById('sc-hari').innerText   = '—';
-    document.getElementById('sc-total').innerText  = '—';
-
-    // Grafik: jumlah materi per mata kuliah
-    const mkMap = {};
-    (rMK.data || []).forEach(m => { mkMap[m.id] = m.nama_mk; });
-
-    const countPerMK = {};
-    (rMateri.data || []).forEach(m => {
-      countPerMK[m.mata_kuliah_id] = (countPerMK[m.mata_kuliah_id] || 0) + 1;
-    });
-
-    const labels = Object.keys(countPerMK).map(id => mkMap[id] || `MK #${id}`);
-    const values = Object.values(countPerMK);
-
-    const ctx = document.getElementById('grafik-kunjungan');
-    if (!ctx) return;
-    if (grafikChart) grafikChart.destroy();
-
-    grafikChart = new Chart(ctx.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Jumlah Materi',
-          data: values,
-          backgroundColor: 'rgba(0,45,93,0.75)',
-          borderRadius: 7,
-          borderSkipped: false,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
-    });
-
-  } catch (err) {
-    console.error('loadStats:', err.message);
-  }
+  document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen();
 }
 
 // ══════════════════════════════════════════════
 //  NAVIGASI UTILITIES
 // ══════════════════════════════════════════════
 function openHome() {
-  clearActiveNav();
+  clearNav();
   document.getElementById('btn-home').classList.add('active');
   showPanel('normal');
-  setTitle('Public Health Learning Center', 'graduation-cap');
-  document.getElementById('breadcrumb-bar').style.display = 'none';
+  document.getElementById('page-title').innerHTML = 'Public Health Learning Center';
+  document.getElementById('bc-bar').style.display = 'none';
   document.getElementById('content-area').innerHTML = `
     <div class="state-box">
-      <div class="state-icon"><i class="fas fa-graduation-cap" style="color:var(--navy);opacity:.9;font-size:3rem;"></i></div>
+      <div class="si"><i class="fas fa-graduation-cap" style="color:var(--navy);opacity:.9;font-size:3rem;"></i></div>
       <h5>Selamat Datang di Portal Akademik</h5>
       <p>Pilih kategori kurikulum di panel kiri<br>untuk mengakses bahan ajar dan materi perkuliahan.</p>
     </div>`;
 }
-
-function openCBT() {
-  window.open(CBT_URL, '_blank', 'noopener,noreferrer');
-  if (window.innerWidth < 992) toggleSidebar();
-}
-
+function openCBT() { window.open(CBT_URL,'_blank','noopener,noreferrer'); if(window.innerWidth<992)toggleSidebar(); }
 function openStats() {
-  clearActiveNav();
-  document.getElementById('btn-stat').classList.add('active');
+  clearNav(); document.getElementById('btn-stat').classList.add('active');
   showPanel('stats');
-  if (window.innerWidth < 992) toggleSidebar();
-  setTimeout(loadStats, 80);
+  if(window.innerWidth<992)toggleSidebar();
+  setTimeout(loadStats,80);
 }
 
-function showPanel(which) {
-  document.getElementById('normal-panel').style.display = which === 'normal' ? 'block' : 'none';
-  document.getElementById('stats-panel').style.display  = which === 'stats'  ? 'block' : 'none';
-  document.getElementById('hero-header').style.display  = which === 'normal' ? 'flex'  : 'none';
+function showPanel(w) {
+  document.getElementById('normal-panel').style.display = w==='normal' ? 'block' : 'none';
+  document.getElementById('stats-panel').style.display  = w==='stats'  ? 'block' : 'none';
+  document.getElementById('admin-panel').style.display  = w==='admin'  ? 'block' : 'none';
+  document.getElementById('hero-header').style.display  = w==='normal' ? 'flex'  : 'none';
 }
-
-function clearActiveNav() {
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-}
-
+function clearNav() { document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); }
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
-  document.querySelector('.sidebar-overlay').classList.toggle('open');
+  document.querySelector('.sb-overlay').classList.toggle('open');
 }
-
-function setTitle(text, icon) {
-  document.getElementById('page-title').innerHTML =
-    `<div class="title-icon"><i class="fas fa-${icon}"></i></div> ${escHtml(text)}`;
+function setTitle(t, ic) {
+  document.getElementById('page-title').innerHTML = `<div class="ti"><i class="fas fa-${ic}"></i></div> ${escH(t)}`;
 }
-
-// Breadcrumb — menuId digunakan untuk navigasi balik ke daftar MK
-let _bcMenuId = null;
-let _bcMenuName = null;
+function setLoading() {
+  document.getElementById('content-area').innerHTML = '<div class="state-box"><div class="spin"></div><p style="color:var(--muted);">Memuat data...</p></div>';
+}
+function setError(msg) {
+  document.getElementById('content-area').innerHTML = `<div class="state-box"><div class="si" style="color:#ef4444;opacity:1;font-size:2.5rem;"><i class="fas fa-exclamation-circle"></i></div><h5>Terjadi Kesalahan</h5><p>${msg}</p></div>`;
+}
 
 function setBreadcrumb(menuName, mkName, menuId) {
-  _bcMenuId   = menuId;
-  _bcMenuName = menuName;
-
-  const bar    = document.getElementById('breadcrumb-bar');
-  const bcMenu = document.getElementById('bc-menu');
-  const bcMk   = document.getElementById('bc-mk');
-  const sep    = document.querySelector('.bc-mk-sep');
-
+  _bcMenuId = menuId; _bcMenuName = menuName;
+  const bar = document.getElementById('bc-bar');
+  const bcM = document.getElementById('bc-menu');
+  const bcK = document.getElementById('bc-mk');
+  const sep = document.querySelector('.bc-mk-sep');
   bar.style.display = 'flex';
-  bcMenu.innerText  = menuName;
-  bcMenu.onclick    = () => goBackToMenu();
-
+  bcM.innerText = menuName;
   if (mkName) {
-    sep.style.display   = 'inline';
-    bcMk.style.display  = 'inline';
-    bcMk.innerText      = mkName;
-    bcMenu.className    = 'crumb';
+    sep.style.display = 'inline'; bcK.style.display = 'inline'; bcK.innerText = mkName;
+    bcM.className = 'crumb'; bcM.onclick = () => goBackToMenu();
   } else {
-    sep.style.display   = 'none';
-    bcMk.style.display  = 'none';
-    bcMenu.className    = 'current';
-    bcMenu.onclick      = null;
+    sep.style.display = 'none'; bcK.style.display = 'none';
+    bcM.className = 'cur'; bcM.onclick = null;
   }
 }
-
 function goBackToMenu() {
-  if (_bcMenuId && _bcMenuName) {
+  if (_bcMenuId) {
     const el = document.getElementById(`menu-${_bcMenuId}`);
-    selectMenu(el || { classList: { add: () => {} } }, _bcMenuId, _bcMenuName);
+    selectMenu(el || { classList:{add:()=>{}} }, _bcMenuId, _bcMenuName);
   }
 }
 
-function doLogin() {
-  alert("Sistem Manajemen Admin sedang dalam tahap migrasi ke Supabase Auth.");
-  loginModal.hide();
+// ── Helpers ──
+function statusBadge(v) {
+  return v===false || v===null
+    ? '<span class="status-badge status-off"><i class="fas fa-eye-slash me-1"></i>Tersembunyi</span>'
+    : '<span class="status-badge status-on"><i class="fas fa-check me-1"></i>Aktif</span>';
 }
-
-// ══════════════════════════════════════════════
-//  HELPER
-// ══════════════════════════════════════════════
-function escHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function escH(s) {
+  if (!s && s!==0) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function escAttr(str) {
-  if (!str) return '';
-  return str.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+function escA(s) {
+  if (!s) return '';
+  return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
 }
-function loadingHTML() {
-  return `<div class="state-box"><div class="spinner-ring"></div><p style="color:var(--text-muted);">Memuat data...</p></div>`;
+function safeJson(obj) {
+  return JSON.stringify(obj).replace(/'/g,"&#39;").replace(/"/g,'&quot;');
 }
 function emptyHTML(title, msg) {
-  return `<div class="state-box"><div class="state-icon"><i class="fas fa-inbox"></i></div><h5>${title}</h5><p>${msg}</p></div>`;
-}
-function errorHTML(msg) {
-  return `<div class="state-box"><div class="state-icon" style="color:#ef4444;opacity:1;"><i class="fas fa-exclamation-circle"></i></div><h5>Terjadi Kesalahan</h5><p>${msg}</p></div>`;
+  return `<div class="state-box"><div class="si"><i class="fas fa-inbox"></i></div><h5>${title}</h5><p>${msg}</p></div>`;
 }
 </script>
 </body>
