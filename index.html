@@ -298,39 +298,36 @@ async function loadSidebar() {
 }
 
 // 2. Aksi saat Salah Satu Menu Kategori Diklik
-async function selectMenu(element, id, name) {
-  clearActiveNav();
-  element.classList.add('active');
-  if (window.innerWidth < 992) toggleSidebar();
-  
-  document.getElementById('page-title').innerText = name;
-  showPanel('normal');
-  
-  const grid = document.getElementById('content-grid');
-  if (grid) {
-    grid.innerHTML = `
-      <div class="col-12 text-center p-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <div class="text-muted mt-2" style="font-size:0.9rem;">Memuat data kelas dari Supabase...</div>
-      </div>
-    `;
-  }
+async function selectMenu(element, menuId, menuName) {
+  // 1. Efek warna biru pada menu yang aktif
+  document.querySelectorAll('.nav-item-custom').forEach(el => el.classList.remove('active'));
+  if (element) element.classList.add('active');
+
+  // 2. Mengubah Judul Halaman
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.innerText = menuName;
+
+  // 3. Menampilkan loading di area konten
+  const contentArea = document.getElementById('main-content');
+  if (contentArea) contentArea.innerHTML = '<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i> Memuat data...</div>';
 
   try {
-    // Cari data di tabel 'mata_kuliah' berdasarkan Relasi ID Kategori Menu
+    // ⚠️ SINKRONISASI: Di sini kita gunakan 'menuId' sesuai dengan parameter di atas
     let { data: mataKuliah, error } = await supabaseClient
       .from('mata_kuliah')
       .select('*')
-      .eq('menu_utama_id', id);
+      .eq('menu_utama_id', menuId);
 
     if (error) throw error;
+    
+    // 4. Tampilkan daftar mata kuliah ke layar
     renderMataKuliah(mataKuliah);
+    
   } catch (err) {
     console.error("Gagal memuat kelas:", err.message);
-    if (grid) grid.innerHTML = '<div class="col-12 text-center text-danger p-5">Gagal mengambil data perkuliahan.</div>';
+    if (contentArea) contentArea.innerHTML = '<div class="col-12 text-center text-danger p-5">Gagal mengambil data perkuliahan.</div>';
   }
 }
-
 // 3. Render Kartu Kelas Kuliah ke dalam Grid Layar
 function renderMataKuliah(daftarMK) {
   const grid = document.getElementById('content-grid');
